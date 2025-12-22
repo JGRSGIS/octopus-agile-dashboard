@@ -1,0 +1,83 @@
+version: '3.8'
+
+# Octopus Agile Dashboard - Docker Compose
+# Usage: docker-compose up -d
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:15-alpine
+    container_name: octopus-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: octopus
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-octopus_secret}
+      POSTGRES_DB: octopus_agile
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U octopus -d octopus_agile"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache (optional)
+  redis:
+    image: redis:7-alpine
+    container_name: octopus-redis
+    restart: unless-stopped
+    command: redis-server --appendonly yes
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # FastAPI Backend
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: octopus-backend
+    restart: unless-stopped
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://octopus:${DB_PASSWORD:-octopus_secret}@db:5432/octopus_agile
+      - REDIS_URL=redis://redis:6379/0
+      - OCTOPUS_API_KEY=${OCTOPUS_API_KEY}
+      - MPAN=${MPAN}
+      - SERIAL_NUMBER=${SERIAL_NUMBER}
+      - REGION=${REGION:-H}
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # React Frontend (Nginx)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: octopus-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"
+    depends_on:
+      - backend
+
+volumes:
+  postgres_data:
+  redis_data:
+
+networks:
+  default:
+    name: octopus-network

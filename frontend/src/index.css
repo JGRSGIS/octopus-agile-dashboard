@@ -1,0 +1,113 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Custom dark theme styles */
+:root {
+  --color-bg: #111827;
+  --color-bg-secondary: #1f2937;
+  --color-text: #f3f4f6;
+  --color-text-muted: #9ca3af;
+}
+
+body {
+  @apply bg-gray-900 text-gray-100;
+  font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-gray-600 rounded;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  @apply bg-gray-500;
+}
+
+/* AG Grid dark theme overrides */
+.ag-theme-alpine-dark {
+  --ag-background-color: #1f2937;
+  --ag-header-background-color: #374151;
+  --ag-odd-row-background-color: #111827;
+  --ag-row-hover-color: #374151;
+  --ag-border-color: #4b5563;
+  --ag-header-foreground-color: #e5e7eb;
+  --ag-foreground-color: #d1d5db;
+}
+
+/* Plotly chart dark mode */
+.js-plotly-plot .plotly .modebar-btn path {
+  fill: #9ca3af !important;
+}
+
+.js-plotly-plot .plotly .modebar-btn:hover path {
+  fill: #f3f4f6 !important;
+}
+
+/* Animation utilities */
+@keyframes pulse-glow {
+  0%, 100% {
+    box-shadow: 0 0 5px currentColor;
+  }
+  50% {
+    box-shadow: 0 0 20px currentColor, 0 0 40px currentColor;
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Price category badges */
+.price-negative {
+  @apply bg-emerald-500/20 text-emerald-400 border border-emerald-500/30;
+}
+
+.price-cheap {
+  @apply bg-blue-500/20 text-blue-400 border border-blue-500/30;
+}
+
+.price-normal {
+  @apply bg-yellow-500/20 text-yellow-400 border border-yellow-500/30;
+}
+
+.price-expensive {
+  @apply bg-orange-500/20 text-orange-400 border border-orange-500/30;
+}
+
+.price-very-expensive {
+  @apply bg-red-500/20 text-red-400 border border-red-500/30;
+}
+
+/* Card hover effects */
+.card-hover {
+  @apply transition-all duration-200;
+}
+
+.card-hover:hover {
+  @apply transform -translate-y-1 shadow-lg;
+}
+
+/* Loading skeleton */
+.skeleton {
+  @apply animate-pulse bg-gray-700 rounded;
+}
+
+/* Focus styles for accessibility */
+button:focus-visible,
+a:focus-visible,
+input:focus-visible {
+  @apply outline-none ring-2 ring-blue-500 ring-offset-2 ring-offset-gray-900;
+}
