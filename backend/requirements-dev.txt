@@ -1,42 +1,48 @@
-# Octopus Agile Dashboard - Backend Production Dependencies
+# Octopus Agile Dashboard - Development Dependencies
 # Generated: 2025-12-30
 #
-# SECURITY NOTES:
-# - All packages audited with pip-audit - no vulnerabilities found
-# - Versions pinned to specific releases for reproducibility
+# Install production dependencies first, then dev dependencies:
+#   pip install -r requirements.txt
+#   pip install -r requirements-dev.txt
 #
-# DEPENDENCY AUDIT SUMMARY:
-# - fastapi: 0.115.x (LTS-compatible, stable API)
-# - pydantic: 2.10.x (compatible with pydantic-settings)
-# - All packages updated to latest stable versions
+# Or install both at once:
+#   pip install -r requirements.txt -r requirements-dev.txt
+
+# Include production dependencies
+-r requirements.txt
 
 # ============================================================================
-# Web Framework
+# Testing
 # ============================================================================
-fastapi==0.115.6
-uvicorn[standard]==0.34.0
-pydantic==2.10.4
-pydantic-settings==2.7.0
+pytest==8.3.4
+pytest-asyncio==0.24.0
+pytest-cov==6.0.0
+
+# httpx is required for FastAPI TestClient (already in requirements.txt)
+# but listed here for clarity about test usage
 
 # ============================================================================
-# HTTP Client
+# Code Formatting
 # ============================================================================
-httpx==0.28.1
+black==24.10.0
+isort==5.13.2
 
 # ============================================================================
-# Database
+# Linting & Type Checking
 # ============================================================================
-sqlalchemy[asyncio]==2.0.36
-asyncpg==0.30.0
-alembic==1.14.0
+mypy==1.13.0
+ruff==0.8.4
 
 # ============================================================================
-# Caching (optional - for Redis support)
+# Type Stubs (for mypy)
 # ============================================================================
-redis==5.2.1
+types-python-dateutil==2.9.0.20241206
 
 # ============================================================================
-# Utilities
+# Development Utilities
 # ============================================================================
-python-dotenv==1.0.1
-python-dateutil==2.9.0.post0
+# pip-tools for dependency management
+pip-tools==7.4.1
+
+# Pre-commit hooks
+pre-commit==4.0.1
