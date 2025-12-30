@@ -44,8 +44,8 @@ export function PriceChart({
     return prices.map((p) => getPriceColor(p.value_inc_vat));
   }, [prices]);
 
-  // Find current time for vertical line
-  const now = new Date();
+  // Find current time for vertical line (as ISO string for Plotly)
+  const now = new Date().toISOString();
 
   // Create traces
   const traces: Plotly.Data[] = [
@@ -101,7 +101,9 @@ export function PriceChart({
       b: 60,
     },
     xaxis: {
-      title: '',
+      title: {
+        text: '',
+      },
       tickformat: '%H:%M',
       tickangle: -45,
       gridcolor: '#374151',
@@ -110,8 +112,10 @@ export function PriceChart({
       zeroline: false,
     },
     yaxis: {
-      title: 'Price (p/kWh)',
-      titlefont: { color: '#9ca3af' },
+      title: {
+        text: 'Price (p/kWh)',
+        font: { color: '#9ca3af' },
+      },
       tickfont: { color: '#9ca3af' },
       gridcolor: '#374151',
       zeroline: true,
@@ -119,8 +123,10 @@ export function PriceChart({
       zerolinewidth: 2,
     },
     yaxis2: showConsumption && consumptionData.length > 0 ? {
-      title: 'Usage (kWh)',
-      titlefont: { color: '#8b5cf6' },
+      title: {
+        text: 'Usage (kWh)',
+        font: { color: '#8b5cf6' },
+      },
       tickfont: { color: '#8b5cf6' },
       overlaying: 'y',
       side: 'right',
