@@ -1,0 +1,41 @@
+# Terraform/OpenTofu files
+*.tfstate
+*.tfstate.*
+*.tfstate.backup
+.terraform/
+.terraform.lock.hcl
+crash.log
+crash.*.log
+
+# Sensitive files - NEVER commit these
+terraform.tfvars
+*.auto.tfvars
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# SSH keys
+*.pem
+*.key
+id_rsa
+id_rsa.pub
+
+# OCI credentials
+oci_api_key.pem
+oci_api_key_public.pem
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+*.swp
+*.swo
+.vscode/
+
+# OS files
+.DS_Store
+Thumbs.db

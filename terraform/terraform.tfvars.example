@@ -1,0 +1,135 @@
+# Octopus Agile Dashboard - Terraform Variables Example
+# Copy this file to terraform.tfvars and fill in your values
+
+# ============================================================================
+# OCI Authentication (Required)
+# ============================================================================
+
+# Your tenancy OCID (found in OCI Console → Tenancy Details)
+tenancy_ocid = "ocid1.tenancy.oc1..aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxx"
+
+# Your user OCID (found in OCI Console → User Settings)
+user_ocid = "ocid1.user.oc1..aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxx"
+
+# API key fingerprint (shown when you add an API key)
+fingerprint = "xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx:xx"
+
+# Path to your OCI API private key file
+private_key_path = "~/.oci/oci_api_key.pem"
+
+# Compartment where resources will be created
+# Use tenancy_ocid if you want to create in root compartment
+compartment_ocid = "ocid1.compartment.oc1..aaaaaaaaxxxxxxxxxxxxxxxxxxxxxxx"
+
+# OCI region (e.g., uk-london-1, eu-frankfurt-1, us-ashburn-1)
+region = "uk-london-1"
+
+# ============================================================================
+# Project Settings
+# ============================================================================
+
+project_name = "agile-dashboard"
+environment  = "prod"
+
+# ============================================================================
+# Networking (defaults are fine for most deployments)
+# ============================================================================
+
+vcn_cidr_block      = "10.0.0.0/16"
+public_subnet_cidr  = "10.0.1.0/24"
+private_subnet_cidr = "10.0.2.0/24"
+
+# Restrict SSH access to your IP (recommended for production)
+# allowed_ssh_cidrs = ["YOUR_IP_ADDRESS/32"]
+allowed_ssh_cidrs = ["0.0.0.0/0"]  # Allow from anywhere (less secure)
+
+# ============================================================================
+# Compute Instance (Application Server)
+# ============================================================================
+
+# Free tier shapes (choose one):
+# - VM.Standard.A1.Flex (ARM Ampere) - up to 4 OCPUs, 24GB RAM
+# - VM.Standard.E2.1.Micro (AMD) - 1/8 OCPU, 1GB RAM
+compute_shape = "VM.Standard.A1.Flex"
+
+# For A1.Flex shape (free tier allows total 4 OCPUs, 24GB across all instances)
+compute_ocpus     = 1
+compute_memory_gb = 6
+
+# Boot volume size (free tier allows 200GB total)
+boot_volume_size_gb = 50
+
+# Ubuntu version
+ubuntu_version = "22.04"
+
+# SSH public key (leave empty to auto-generate)
+# ssh_public_key = "ssh-rsa AAAA... your-key-comment"
+ssh_public_key = ""
+
+# ============================================================================
+# Database Instance
+# ============================================================================
+
+db_compute_shape       = "VM.Standard.A1.Flex"
+db_compute_ocpus       = 1
+db_compute_memory_gb   = 6
+db_boot_volume_size_gb = 50
+
+db_name = "octopus_agile"
+db_user = "octopus"
+
+# ============================================================================
+# Octopus Energy API Configuration (Required)
+# ============================================================================
+
+# Get your API key from: https://octopus.energy/dashboard/developer/
+octopus_api_key = "your-octopus-energy-api-key-here"
+
+# Your electricity meter MPAN (13 digits)
+# Find it on your electricity bill or smart meter
+octopus_mpan = "2000000000000"
+
+# Your electricity meter serial number
+octopus_serial_number = "00A0000000"
+
+# Your DNO region (A-P)
+# See: https://www.energy-uk.org.uk/energy-industry/distribution.html
+octopus_region = "H"
+
+# ============================================================================
+# Application Settings
+# ============================================================================
+
+# GitHub repository to clone
+github_repo = "https://github.com/JGRSGIS/octopus-agile-dashboard.git"
+
+# Domain name (leave empty if not using custom domain)
+app_domain = ""
+
+# Enable SSL with Let's Encrypt (requires valid domain)
+enable_ssl = false
+
+# Admin email for SSL certificates and alerts
+admin_email = "admin@example.com"
+
+# Enable Redis caching
+enable_redis = true
+
+# ============================================================================
+# Security & Secrets
+# ============================================================================
+
+# Enable OCI Vault for secrets management (adds cost)
+enable_vault = false
+
+# ============================================================================
+# Monitoring & Alerts
+# ============================================================================
+
+# Enable OCI monitoring and alarms
+enable_monitoring = true
+
+# Alarm thresholds (percentage)
+cpu_alarm_threshold    = 80
+memory_alarm_threshold = 85
+disk_alarm_threshold   = 80
