@@ -134,14 +134,18 @@ if [ "$TOTAL_MEM" -lt 2048 ] && [ "$SWAP_SIZE" -lt 1024 ]; then
         sudo swapon /swapfile 2>/dev/null || true
         echo "Existing swap file enabled"
     fi
+    # Wait for swap to be fully available before memory-intensive operations
+    sleep 2
+    sync
 fi
 
 # Install dependencies
 npm install
 
-# Build with memory-constrained Node.js settings for Raspberry Pi
+# Build with memory settings appropriate for available memory + swap
+# With 2GB swap file, we can safely use 1024MB heap (leaves room for OS and other processes)
 echo "Building frontend with memory-optimized settings..."
-export NODE_OPTIONS="--max-old-space-size=512"
+export NODE_OPTIONS="--max-old-space-size=1024"
 npm run build
 
 echo -e "${GREEN}Frontend build complete${NC}"
