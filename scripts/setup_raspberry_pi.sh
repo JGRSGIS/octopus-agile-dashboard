@@ -189,7 +189,8 @@ echo -e "${YELLOW}Step 8: Setting up Nginx...${NC}"
 
 sudo tee /etc/nginx/sites-available/octopus-agile > /dev/null << EOF
 server {
-    listen 80;
+    listen 0.0.0.0:80;
+    listen [::]:80;
     server_name raspberrypi.local _;
 
     location / {
