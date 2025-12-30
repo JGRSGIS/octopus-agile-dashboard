@@ -103,8 +103,8 @@ source venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# Initialize database
-# alembic upgrade head
+# Initialize database (tables are auto-created on startup)
+# Note: alembic upgrade head can be run for explicit migration control
 
 echo -e "${GREEN}Backend setup complete${NC}"
 
@@ -203,6 +203,7 @@ chmod +x "$PROJECT_DIR/scripts/"*.sh
 # Add cron jobs
 (crontab -l 2>/dev/null || true; echo "*/30 * * * * $PROJECT_DIR/scripts/fetch_prices.sh >> ~/logs/fetch.log 2>&1") | sort -u | crontab -
 (crontab -l 2>/dev/null || true; echo "0 * * * * $PROJECT_DIR/scripts/fetch_consumption.sh >> ~/logs/consumption.log 2>&1") | sort -u | crontab -
+(crontab -l 2>/dev/null || true; echo "0 3 * * * $PROJECT_DIR/scripts/cleanup_old_data.sh >> ~/logs/cleanup.log 2>&1") | sort -u | crontab -
 
 echo -e "${GREEN}Cron jobs configured${NC}"
 

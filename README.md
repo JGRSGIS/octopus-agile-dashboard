@@ -2,8 +2,6 @@
 
 A full-stack application for visualising Octopus Energy Agile tariff prices and smart meter consumption data with interactive charts, optimised for deployment on a Raspberry Pi.
 
-![Dashboard Preview](docs/dashboard-preview.png)
-
 ## Overview
 
 This application provides real-time visualization of electricity prices and smart meter usage from Octopus Energy. It helps users on the Agile Octopus tariff optimise their energy consumption by showing when electricity is cheapest (or even negative - when you get paid to use power!).
@@ -75,7 +73,7 @@ This application provides real-time visualization of electricity prices and smar
 ### Software Requirements
 - **Python**: 3.11 or higher
 - **Node.js**: 18.x or higher
-- **PostgreSQL**: 14.x or higher (optional, for persistent caching)
+- **PostgreSQL**: 14.x or higher (required for data storage)
 - **Git**: For version control
 
 ### Hardware Requirements (Raspberry Pi)
@@ -94,6 +92,8 @@ This application provides real-time visualization of electricity prices and smar
 
 ### Quick Start (Development)
 
+> **Note**: PostgreSQL must be installed and running before starting the backend.
+
 ```bash
 # Clone the repository
 git clone https://github.com/YOUR_USERNAME/octopus-agile-dashboard.git
@@ -103,9 +103,15 @@ cd octopus-agile-dashboard
 cp .env.example .env
 # Edit .env with your credentials (see Configuration section)
 
+# Set up PostgreSQL database (if not already done)
+# On macOS: brew install postgresql && brew services start postgresql
+# On Ubuntu: sudo apt install postgresql && sudo systemctl start postgresql
+sudo -u postgres psql -c "CREATE USER octopus WITH PASSWORD 'your_password';"
+sudo -u postgres psql -c "CREATE DATABASE octopus_agile OWNER octopus;"
+
 # Backend setup
 cd backend
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 uvicorn app.main:app --reload
@@ -468,8 +474,7 @@ octopus-agile-dashboard/
 │   └── setup_raspberry_pi.sh      # Automated Pi setup
 ├── docs/
 │   ├── API.md                     # API documentation
-│   ├── DEPLOYMENT.md              # Deployment guide
-│   └── dashboard-preview.png
+│   └── DEPLOYMENT.md              # Deployment guide
 ├── .env.example
 ├── .gitignore
 ├── docker-compose.yml             # Docker setup (optional)
