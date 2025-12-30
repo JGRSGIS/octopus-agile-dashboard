@@ -1,0 +1,276 @@
+#cloud-config
+# Octopus Agile Dashboard - Application Server Cloud-Init Configuration
+# This script sets up the application server with Docker and deploys the app
+
+package_update: true
+package_upgrade: true
+
+packages:
+  - apt-transport-https
+  - ca-certificates
+  - curl
+  - gnupg
+  - lsb-release
+  - git
+  - nginx
+  - certbot
+  - python3-certbot-nginx
+  - ufw
+  - htop
+  - jq
+
+# Create application user
+users:
+  - name: app
+    groups: docker
+    shell: /bin/bash
+    sudo: ALL=(ALL) NOPASSWD:ALL
+
+write_files:
+  # Docker daemon configuration
+  - path: /etc/docker/daemon.json
+    permissions: '0644'
+    content: |
+      {
+        "log-driver": "json-file",
+        "log-opts": {
+          "max-size": "10m",
+          "max-file": "3"
+        },
+        "storage-driver": "overlay2"
+      }
+
+  # Application environment file
+  - path: /opt/app/.env
+    permissions: '0600'
+    content: |
+      # Database Configuration
+      DATABASE_URL=postgresql+asyncpg://${db_user}:${db_password}@${db_host}:${db_port}/${db_name}
+
+      # Redis Configuration
+      REDIS_URL=${redis_enabled ? "redis://localhost:6379/0" : ""}
+      CACHE_ENABLED=true
+      CACHE_TTL_SECONDS=3600
+
+      # Octopus Energy API
+      OCTOPUS_API_KEY=${octopus_api_key}
+      MPAN=${octopus_mpan}
+      SERIAL_NUMBER=${octopus_serial_number}
+      REGION=${octopus_region}
+
+      # Server Configuration
+      API_HOST=0.0.0.0
+      API_PORT=8000
+      DEBUG=false
+
+      # Frontend Configuration
+      VITE_API_URL=http://localhost:8000
+
+  # Docker Compose override for production
+  - path: /opt/app/docker-compose.override.yml
+    permissions: '0644'
+    content: |
+      version: '3.8'
+      services:
+        backend:
+          restart: always
+          environment:
+            - DATABASE_URL=postgresql+asyncpg://${db_user}:${db_password}@${db_host}:${db_port}/${db_name}
+            - REDIS_URL=${redis_enabled ? "redis://redis:6379/0" : ""}
+            - OCTOPUS_API_KEY=${octopus_api_key}
+            - MPAN=${octopus_mpan}
+            - SERIAL_NUMBER=${octopus_serial_number}
+            - REGION=${octopus_region}
+          depends_on:
+            redis:
+              condition: service_healthy
+
+        frontend:
+          restart: always
+          environment:
+            - VITE_API_URL=/api
+
+        redis:
+          image: redis:7-alpine
+          restart: always
+          volumes:
+            - redis_data:/data
+          healthcheck:
+            test: ["CMD", "redis-cli", "ping"]
+            interval: 10s
+            timeout: 5s
+            retries: 5
+
+      volumes:
+        redis_data:
+
+  # Nginx configuration for reverse proxy
+  - path: /etc/nginx/sites-available/agile-dashboard
+    permissions: '0644'
+    content: |
+      upstream backend {
+          server 127.0.0.1:8000;
+      }
+
+      server {
+          listen 80 default_server;
+          listen [::]:80 default_server;
+          server_name ${app_domain != "" ? app_domain : "_"};
+
+          # Frontend static files
+          location / {
+              proxy_pass http://127.0.0.1:3000;
+              proxy_http_version 1.1;
+              proxy_set_header Upgrade $http_upgrade;
+              proxy_set_header Connection 'upgrade';
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              proxy_cache_bypass $http_upgrade;
+          }
+
+          # API endpoints
+          location /api {
+              proxy_pass http://backend;
+              proxy_http_version 1.1;
+              proxy_set_header Host $host;
+              proxy_set_header X-Real-IP $remote_addr;
+              proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+              proxy_set_header X-Forwarded-Proto $scheme;
+              proxy_connect_timeout 60s;
+              proxy_send_timeout 60s;
+              proxy_read_timeout 60s;
+          }
+
+          # Health check endpoint
+          location /health {
+              access_log off;
+              return 200 "healthy\n";
+              add_header Content-Type text/plain;
+          }
+
+          # Gzip compression
+          gzip on;
+          gzip_vary on;
+          gzip_min_length 1024;
+          gzip_proxied any;
+          gzip_types text/plain text/css text/xml text/javascript application/x-javascript application/xml application/javascript application/json;
+          gzip_disable "MSIE [1-6]\.";
+      }
+
+  # Setup script
+  - path: /opt/setup.sh
+    permissions: '0755'
+    content: |
+      #!/bin/bash
+      set -e
+
+      echo "=== Starting Octopus Agile Dashboard Setup ==="
+
+      # Wait for apt locks to clear
+      while fuser /var/lib/dpkg/lock-frontend >/dev/null 2>&1; do
+        echo "Waiting for apt lock..."
+        sleep 5
+      done
+
+      # Install Docker
+      echo "Installing Docker..."
+      curl -fsSL https://get.docker.com -o get-docker.sh
+      sh get-docker.sh
+      rm get-docker.sh
+
+      # Install Docker Compose
+      echo "Installing Docker Compose..."
+      DOCKER_COMPOSE_VERSION=$(curl -s https://api.github.com/repos/docker/compose/releases/latest | jq -r '.tag_name')
+      curl -L "https://github.com/docker/compose/releases/download/$${DOCKER_COMPOSE_VERSION}/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+      chmod +x /usr/local/bin/docker-compose
+
+      # Add ubuntu user to docker group
+      usermod -aG docker ubuntu
+
+      # Clone the repository
+      echo "Cloning application repository..."
+      cd /opt
+      if [ -d "/opt/app/.git" ]; then
+        cd /opt/app
+        git pull origin main
+      else
+        git clone ${github_repo} app
+        cd /opt/app
+      fi
+
+      # Copy environment file
+      cp /opt/app/.env /opt/app/.env.backup 2>/dev/null || true
+
+      # Build and start the application
+      echo "Building and starting application..."
+      cd /opt/app
+      docker-compose -f docker-compose.yml -f /opt/app/docker-compose.override.yml pull || true
+      docker-compose -f docker-compose.yml -f /opt/app/docker-compose.override.yml build
+      docker-compose -f docker-compose.yml -f /opt/app/docker-compose.override.yml up -d
+
+      # Configure Nginx
+      echo "Configuring Nginx..."
+      ln -sf /etc/nginx/sites-available/agile-dashboard /etc/nginx/sites-enabled/
+      rm -f /etc/nginx/sites-enabled/default
+      nginx -t && systemctl reload nginx
+
+      # Configure firewall
+      echo "Configuring firewall..."
+      ufw default deny incoming
+      ufw default allow outgoing
+      ufw allow ssh
+      ufw allow http
+      ufw allow https
+      ufw --force enable
+
+      # Setup SSL if domain is configured
+      %{ if enable_ssl && app_domain != "" }
+      echo "Setting up SSL certificate..."
+      certbot --nginx -d ${app_domain} --non-interactive --agree-tos -m ${admin_email} --redirect
+      %{ endif }
+
+      # Create systemd service for auto-updates
+      cat > /etc/systemd/system/agile-dashboard.service << 'SVCEOF'
+      [Unit]
+      Description=Octopus Agile Dashboard
+      Requires=docker.service
+      After=docker.service
+
+      [Service]
+      Type=oneshot
+      RemainAfterExit=yes
+      WorkingDirectory=/opt/app
+      ExecStart=/usr/local/bin/docker-compose -f docker-compose.yml -f docker-compose.override.yml up -d
+      ExecStop=/usr/local/bin/docker-compose -f docker-compose.yml -f docker-compose.override.yml down
+
+      [Install]
+      WantedBy=multi-user.target
+      SVCEOF
+
+      systemctl daemon-reload
+      systemctl enable agile-dashboard
+
+      # Setup log rotation
+      cat > /etc/logrotate.d/agile-dashboard << 'LOGEOF'
+      /opt/app/logs/*.log {
+          daily
+          rotate 7
+          compress
+          delaycompress
+          missingok
+          notifempty
+          create 0644 app app
+      }
+      LOGEOF
+
+      echo "=== Setup Complete ==="
+      echo "Application URL: http://$(curl -s http://169.254.169.254/opc/v1/instance/metadata/vnic/publicIp)"
+      echo "API Docs: http://$(curl -s http://169.254.169.254/opc/v1/instance/metadata/vnic/publicIp)/api/docs"
+
+runcmd:
+  # Run setup script
+  - /opt/setup.sh 2>&1 | tee /var/log/agile-dashboard-setup.log
+
+final_message: "Octopus Agile Dashboard setup complete! Time: $UPTIME seconds."
