@@ -1,0 +1,97 @@
+# Octopus Agile Dashboard - YAML Lint Configuration
+# https://yamllint.readthedocs.io/
+
+extends: default
+
+ignore: |
+  node_modules/
+  .venv/
+  dist/
+  build/
+
+rules:
+  # Line length
+  line-length:
+    max: 120
+    level: warning
+    allow-non-breakable-words: true
+    allow-non-breakable-inline-mappings: true
+
+  # Indentation
+  indentation:
+    spaces: 2
+    indent-sequences: true
+    check-multi-line-strings: false
+
+  # Truthy values
+  truthy:
+    allowed-values: ['true', 'false', 'yes', 'no', 'on', 'off']
+    check-keys: false
+
+  # Comments
+  comments:
+    require-starting-space: true
+    ignore-shebangs: true
+    min-spaces-from-content: 1
+
+  comments-indentation: {}
+
+  # Document markers
+  document-start: disable
+  document-end: disable
+
+  # Brackets and braces
+  brackets:
+    min-spaces-inside: 0
+    max-spaces-inside: 0
+    min-spaces-inside-empty: -1
+    max-spaces-inside-empty: -1
+
+  braces:
+    min-spaces-inside: 0
+    max-spaces-inside: 1
+    min-spaces-inside-empty: -1
+    max-spaces-inside-empty: -1
+
+  # Colons and commas
+  colons:
+    max-spaces-before: 0
+    max-spaces-after: 1
+
+  commas:
+    max-spaces-before: 0
+    min-spaces-after: 1
+    max-spaces-after: 1
+
+  # Hyphens
+  hyphens:
+    max-spaces-after: 1
+
+  # Empty lines
+  empty-lines:
+    max: 2
+    max-start: 0
+    max-end: 0
+
+  # New lines
+  new-line-at-end-of-file: enable
+  new-lines:
+    type: unix
+
+  # Key duplicates
+  key-duplicates: enable
+
+  # Key ordering
+  key-ordering: disable
+
+  # Octal values
+  octal-values:
+    forbid-implicit-octal: true
+    forbid-explicit-octal: true
+
+  # Quoted strings
+  quoted-strings:
+    quote-type: any
+    required: only-when-needed
+    extra-allowed: []
+    extra-required: []

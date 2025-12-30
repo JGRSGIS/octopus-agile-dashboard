@@ -52,16 +52,12 @@ export function CurrentPrice({
         {priceCategory === 'negative' && (
           <div className="flex items-center justify-center gap-2 mb-2">
             <Zap className="w-6 h-6 animate-pulse" />
-            <span className="text-lg font-bold uppercase tracking-wide">
-              You Get Paid!
-            </span>
+            <span className="text-lg font-bold uppercase tracking-wide">You Get Paid!</span>
             <Zap className="w-6 h-6 animate-pulse" />
           </div>
         )}
 
-        <p className="text-sm uppercase tracking-wide opacity-80 mb-2">
-          Current Price
-        </p>
+        <p className="text-sm uppercase tracking-wide opacity-80 mb-2">Current Price</p>
 
         <p className="text-7xl font-bold tracking-tight">
           {formatPrice(currentPrice.value_inc_vat)}
@@ -85,12 +81,8 @@ export function CurrentPrice({
             <Zap className="w-5 h-5 text-white" />
           </div>
           <div>
-            <p className="font-semibold text-emerald-400">
-              Negative prices coming soon!
-            </p>
-            <p className="text-sm text-gray-300">
-              Check the best upcoming times below
-            </p>
+            <p className="font-semibold text-emerald-400">Negative prices coming soon!</p>
+            <p className="text-sm text-gray-300">Check the best upcoming times below</p>
           </div>
         </div>
       )}
@@ -114,16 +106,10 @@ export function CurrentPrice({
                   className="flex items-center justify-between bg-gray-700/50 rounded-lg px-3 py-2"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="text-gray-500 text-sm w-4">
-                      {index + 1}
-                    </span>
+                    <span className="text-gray-500 text-sm w-4">{index + 1}</span>
                     <div>
-                      <p className="font-medium text-gray-200">
-                        {formatTime(time)}
-                      </p>
-                      <p className="text-xs text-gray-400">
-                        {formatRelativeTime(time)}
-                      </p>
+                      <p className="font-medium text-gray-200">{formatTime(time)}</p>
+                      <p className="text-xs text-gray-400">{formatRelativeTime(time)}</p>
                     </div>
                   </div>
                   <span
@@ -131,8 +117,8 @@ export function CurrentPrice({
                       category === 'negative'
                         ? 'text-emerald-400'
                         : category === 'cheap'
-                        ? 'text-blue-400'
-                        : 'text-gray-300'
+                          ? 'text-blue-400'
+                          : 'text-gray-300'
                     }`}
                   >
                     {formatPrice(period.value_inc_vat)}

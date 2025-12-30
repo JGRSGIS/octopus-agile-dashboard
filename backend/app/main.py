@@ -3,20 +3,21 @@ Octopus Agile Dashboard - FastAPI Backend
 Main application entry point
 """
 
+import logging
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from contextlib import asynccontextmanager
-import logging
 
-from app.api import prices, consumption, analysis
-from app.core.config import settings
+from app.api import analysis, consumption, prices
 from app.core.cache import cache_manager
-from app.db.database import engine, Base
+from app.core.config import settings
+from app.db.database import Base, engine
 
 # Configure logging
 logging.basicConfig(
     level=logging.INFO if not settings.DEBUG else logging.DEBUG,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 logger = logging.getLogger(__name__)
 
@@ -26,27 +27,28 @@ async def lifespan(app: FastAPI):
     """Application lifespan handler for startup and shutdown events."""
     # Startup
     logger.info("Starting Octopus Agile Dashboard API...")
-    
+
     # Initialize database tables
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Database tables initialized")
-    
+
     # Initialize cache
     await cache_manager.initialize()
     logger.info("Cache manager initialized")
-    
+
     # Pre-fetch current prices on startup
     try:
         from app.services.octopus_api import OctopusAPIClient
+
         client = OctopusAPIClient()
         await client.fetch_current_prices()
         logger.info("Initial price data fetched successfully")
     except Exception as e:
         logger.warning(f"Could not fetch initial prices: {e}")
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down Octopus Agile Dashboard API...")
     await cache_manager.close()
@@ -60,7 +62,7 @@ app = FastAPI(
     lifespan=lifespan,
     docs_url="/api/docs",
     redoc_url="/api/redoc",
-    openapi_url="/api/openapi.json"
+    openapi_url="/api/openapi.json",
 )
 
 # Configure CORS
@@ -85,7 +87,7 @@ async def health_check():
         "status": "healthy",
         "version": "1.0.0",
         "region": settings.REGION,
-        "cache_enabled": settings.CACHE_ENABLED
+        "cache_enabled": settings.CACHE_ENABLED,
     }
 
 
@@ -99,16 +101,17 @@ async def root():
         "endpoints": {
             "prices": "/api/prices",
             "consumption": "/api/consumption",
-            "analysis": "/api/analysis"
-        }
+            "analysis": "/api/analysis",
+        },
     }
 
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "app.main:app",
         host=settings.API_HOST,
         port=settings.API_PORT,
-        reload=settings.DEBUG
+        reload=settings.DEBUG,
     )

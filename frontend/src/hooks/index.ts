@@ -2,7 +2,8 @@
  * Custom React hooks for data fetching with React Query
  */
 
-import { useQuery, UseQueryResult } from '@tanstack/react-query';
+import type { UseQueryResult } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { pricesApi, consumptionApi, analysisApi, healthApi } from '../services/api';
 import type {
   PricesResponse,
@@ -34,7 +35,8 @@ export const queryKeys = {
     all: ['analysis'] as const,
     dashboard: () => [...queryKeys.analysis.all, 'dashboard'] as const,
     summary: (period: string) => [...queryKeys.analysis.all, 'summary', period] as const,
-    recommendations: (hours: number) => [...queryKeys.analysis.all, 'recommendations', hours] as const,
+    recommendations: (hours: number) =>
+      [...queryKeys.analysis.all, 'recommendations', hours] as const,
   },
   health: ['health'] as const,
 };

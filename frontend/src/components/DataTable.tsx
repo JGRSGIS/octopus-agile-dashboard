@@ -21,7 +21,7 @@ import {
 // Price cell renderer with color
 function PriceCellRenderer({ value }: ICellRendererParams) {
   if (value === null || value === undefined) return null;
-  
+
   const category = getPriceCategory(value);
   const colorClasses: Record<string, string> = {
     negative: 'text-emerald-400 font-bold',
@@ -31,11 +31,7 @@ function PriceCellRenderer({ value }: ICellRendererParams) {
     veryExpensive: 'text-red-400 font-bold',
   };
 
-  return (
-    <span className={colorClasses[category]}>
-      {formatPrice(value)}
-    </span>
-  );
+  return <span className={colorClasses[category]}>{formatPrice(value)}</span>;
 }
 
 interface DataTableProps {
@@ -174,8 +170,8 @@ export function DataTable({ data, type, height = 400 }: DataTableProps) {
           {type === 'cost'
             ? 'Cost Breakdown'
             : type === 'consumption'
-            ? 'Consumption Data'
-            : 'Price Data'}
+              ? 'Consumption Data'
+              : 'Price Data'}
         </h3>
         <button
           onClick={exportToCsv}

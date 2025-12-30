@@ -127,16 +127,19 @@ export function PriceChart({
       zerolinecolor: '#6b7280',
       zerolinewidth: 2,
     },
-    yaxis2: showConsumption && consumptionData.length > 0 ? {
-      title: {
-        text: 'Usage (kWh)',
-        font: { color: '#8b5cf6' },
-      },
-      tickfont: { color: '#8b5cf6' },
-      overlaying: 'y',
-      side: 'right',
-      showgrid: false,
-    } : undefined,
+    yaxis2:
+      showConsumption && consumptionData.length > 0
+        ? {
+            title: {
+              text: 'Usage (kWh)',
+              font: { color: '#8b5cf6' },
+            },
+            tickfont: { color: '#8b5cf6' },
+            overlaying: 'y',
+            side: 'right',
+            showgrid: false,
+          }
+        : undefined,
     legend: {
       orientation: 'h',
       x: 0.5,
