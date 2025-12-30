@@ -39,8 +39,8 @@ export function getPriceCategory(
  */
 export const priceColors: PriceColorTheme = {
   negative: '#10b981', // emerald-500
-  cheap: '#3b82f6',    // blue-500
-  normal: '#eab308',   // yellow-500
+  cheap: '#3b82f6', // blue-500
+  normal: '#eab308', // yellow-500
   expensive: '#f97316', // orange-500
   veryExpensive: '#ef4444', // red-500
 };
@@ -134,7 +134,7 @@ export function formatRelativeTime(date: Date | string): string {
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   const diffMins = Math.floor(diffMs / (1000 * 60));
-  
+
   if (diffMins < 0) {
     // Future
     const futureMins = Math.abs(diffMins);
@@ -142,7 +142,7 @@ export function formatRelativeTime(date: Date | string): string {
     if (futureMins < 1440) return `in ${Math.floor(futureMins / 60)} hours`;
     return `in ${Math.floor(futureMins / 1440)} days`;
   }
-  
+
   if (diffMins < 1) return 'just now';
   if (diffMins < 60) return `${diffMins} mins ago`;
   if (diffMins < 1440) return `${Math.floor(diffMins / 60)} hours ago`;

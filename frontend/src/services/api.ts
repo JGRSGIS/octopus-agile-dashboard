@@ -2,7 +2,8 @@
  * API service for communicating with the backend
  */
 
-import axios, { AxiosError, AxiosInstance } from 'axios';
+import type { AxiosError, AxiosInstance } from 'axios';
+import axios from 'axios';
 import type {
   PricesResponse,
   CurrentPriceResponse,
@@ -50,7 +51,7 @@ export const pricesApi = {
       const params: Record<string, string> = {};
       if (periodFrom) params.period_from = periodFrom.toISOString();
       if (periodTo) params.period_to = periodTo.toISOString();
-      
+
       const response = await apiClient.get<PricesResponse>('/prices', { params });
       return response.data;
     } catch (error) {
@@ -78,7 +79,7 @@ export const pricesApi = {
       const params: Record<string, string> = {};
       if (periodFrom) params.period_from = periodFrom.toISOString();
       if (periodTo) params.period_to = periodTo.toISOString();
-      
+
       const response = await apiClient.get<PriceStats>('/prices/stats', { params });
       return response.data;
     } catch (error) {
@@ -94,7 +95,7 @@ export const pricesApi = {
       const params: Record<string, string> = {};
       if (periodFrom) params.period_from = periodFrom.toISOString();
       if (periodTo) params.period_to = periodTo.toISOString();
-      
+
       const response = await apiClient.get('/prices/hourly', { params });
       return response.data;
     } catch (error) {
@@ -126,7 +127,7 @@ export const consumptionApi = {
       const params: Record<string, string> = {};
       if (periodFrom) params.period_from = periodFrom.toISOString();
       if (periodTo) params.period_to = periodTo.toISOString();
-      
+
       const response = await apiClient.get<ConsumptionResponse>('/consumption', { params });
       return response.data;
     } catch (error) {
@@ -154,7 +155,7 @@ export const consumptionApi = {
       const params: Record<string, string> = {};
       if (periodFrom) params.period_from = periodFrom.toISOString();
       if (periodTo) params.period_to = periodTo.toISOString();
-      
+
       const response = await apiClient.get('/consumption/stats', { params });
       return response.data;
     } catch (error) {
@@ -199,7 +200,7 @@ export const analysisApi = {
       if (periodFrom) params.period_from = periodFrom.toISOString();
       if (periodTo) params.period_to = periodTo.toISOString();
       if (flatRate) params.flat_rate_comparison = flatRate;
-      
+
       const response = await apiClient.get('/analysis/cost', { params });
       return response.data;
     } catch (error) {

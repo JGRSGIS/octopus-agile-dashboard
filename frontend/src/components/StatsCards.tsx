@@ -42,9 +42,7 @@ function StatCard({
   return (
     <div
       className={`bg-gray-800 rounded-xl p-4 transition-all ${
-        onClick
-          ? 'cursor-pointer hover:bg-gray-700 hover:scale-105'
-          : ''
+        onClick ? 'cursor-pointer hover:bg-gray-700 hover:scale-105' : ''
       } ${isActive ? 'ring-2 ring-blue-500' : ''}`}
       onClick={onClick}
     >
@@ -118,9 +116,7 @@ export function StatsCards({
               value={priceStats.negative_count.toString()}
               subtitle={priceStats.negative_count > 0 ? 'Free power!' : 'None today'}
               icon={<Zap className="w-5 h-5" />}
-              colorClass={
-                priceStats.negative_count > 0 ? 'text-emerald-400' : 'text-gray-400'
-              }
+              colorClass={priceStats.negative_count > 0 ? 'text-emerald-400' : 'text-gray-400'}
             />
           </div>
         </div>
@@ -195,9 +191,7 @@ export function StatsCards({
                 )
               }
               colorClass={
-                costAnalysis.savings_vs_flat_rate >= 0
-                  ? 'text-emerald-400'
-                  : 'text-red-400'
+                costAnalysis.savings_vs_flat_rate >= 0 ? 'text-emerald-400' : 'text-red-400'
               }
             />
             <StatCard

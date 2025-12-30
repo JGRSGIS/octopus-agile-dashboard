@@ -16,15 +16,9 @@ type TabType = 'overview' | 'prices' | 'consumption' | 'analysis';
 
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
-  
+
   // Fetch dashboard data
-  const {
-    data: dashboardData,
-    isLoading,
-    error,
-    refetch,
-    dataUpdatedAt,
-  } = useDashboard();
+  const { data: dashboardData, isLoading, error, refetch, dataUpdatedAt } = useDashboard();
 
   // Health check
   const { data: health, isLoading: healthLoading } = useHealth();
@@ -52,9 +46,7 @@ export function Dashboard() {
       <div className="min-h-screen bg-gray-900 flex items-center justify-center">
         <div className="text-center max-w-md mx-auto p-6">
           <AlertCircle className="w-16 h-16 text-red-500 mx-auto mb-4" />
-          <h2 className="text-xl font-semibold text-gray-200 mb-2">
-            Unable to Load Dashboard
-          </h2>
+          <h2 className="text-xl font-semibold text-gray-200 mb-2">Unable to Load Dashboard</h2>
           <p className="text-gray-400 mb-4">{error.message}</p>
           <button
             onClick={handleRefresh}
@@ -116,8 +108,8 @@ export function Dashboard() {
                     healthLoading
                       ? 'bg-yellow-400 animate-pulse'
                       : health?.status === 'healthy'
-                      ? 'bg-green-400'
-                      : 'bg-red-400'
+                        ? 'bg-green-400'
+                        : 'bg-red-400'
                   }`}
                 />
                 <span className="text-xs text-gray-400">
@@ -164,11 +156,10 @@ export function Dashboard() {
               <Zap className="w-6 h-6 text-white" />
             </div>
             <div>
-              <h3 className="font-bold text-emerald-400 text-lg">
-                🎉 Negative Prices Coming!
-              </h3>
+              <h3 className="font-bold text-emerald-400 text-lg">🎉 Negative Prices Coming!</h3>
               <p className="text-gray-300">
-                You'll get PAID to use electricity during upcoming periods. Check the best times below!
+                You'll get PAID to use electricity during upcoming periods. Check the best times
+                below!
               </p>
             </div>
           </div>
@@ -233,11 +224,7 @@ export function Dashboard() {
 
             <StatsCards consumptionStats={dashboardData.today.consumption} />
 
-            <DataTable
-              data={dashboardData.consumption_7d}
-              type="consumption"
-              height={500}
-            />
+            <DataTable data={dashboardData.consumption_7d} type="consumption" height={500} />
           </div>
         )}
 
@@ -257,11 +244,7 @@ export function Dashboard() {
               costAnalysis={dashboardData.cost_analysis}
             />
 
-            <DataTable
-              data={dashboardData.cost_analysis.cost_by_period}
-              type="cost"
-              height={500}
-            />
+            <DataTable data={dashboardData.cost_analysis.cost_by_period} type="cost" height={500} />
           </div>
         )}
       </main>
@@ -282,9 +265,7 @@ export function Dashboard() {
               </a>{' '}
               API
             </p>
-            <p>
-              Prices update every 30 minutes • Consumption may have 24-48h delay
-            </p>
+            <p>Prices update every 30 minutes • Consumption may have 24-48h delay</p>
           </div>
         </div>
       </footer>

@@ -1,0 +1,159 @@
+# Octopus Agile Dashboard - Pre-commit Configuration
+# https://pre-commit.com/
+#
+# Install: pre-commit install
+# Run manually: pre-commit run --all-files
+# Update hooks: pre-commit autoupdate
+
+# Minimum pre-commit version required
+minimum_pre_commit_version: "3.0.0"
+
+# Default settings
+default_language_version:
+  python: python3.11
+  node: "20.10.0"
+
+# Skip certain files globally
+exclude: |
+  (?x)^(
+    .*\.min\.js|
+    .*\.min\.css|
+    package-lock\.json|
+    pnpm-lock\.yaml|
+    yarn\.lock
+  )$
+
+repos:
+  # =============================================================================
+  # General Hooks
+  # =============================================================================
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: v5.0.0
+    hooks:
+      - id: trailing-whitespace
+        args: [--markdown-linebreak-ext=md]
+      - id: end-of-file-fixer
+      - id: check-yaml
+        args: [--unsafe]
+      - id: check-json
+      - id: check-toml
+      - id: check-added-large-files
+        args: [--maxkb=1000]
+      - id: check-merge-conflict
+      - id: check-case-conflict
+      - id: detect-private-key
+      - id: mixed-line-ending
+        args: [--fix=lf]
+      - id: no-commit-to-branch
+        args: [--branch, main, --branch, master]
+
+  # =============================================================================
+  # Python - Ruff (Fast Linter + Formatter)
+  # =============================================================================
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.8.4
+    hooks:
+      # Run the linter
+      - id: ruff
+        args: [--fix, --exit-non-zero-on-fix]
+        files: ^backend/
+      # Run the formatter
+      - id: ruff-format
+        files: ^backend/
+
+  # =============================================================================
+  # Python - MyPy (Type Checking)
+  # =============================================================================
+  - repo: https://github.com/pre-commit/mirrors-mypy
+    rev: v1.13.0
+    hooks:
+      - id: mypy
+        files: ^backend/app/
+        args:
+          - --config-file=backend/pyproject.toml
+        additional_dependencies:
+          - types-python-dateutil
+          - pydantic>=2.0
+          - sqlalchemy>=2.0
+          - fastapi>=0.100
+
+  # =============================================================================
+  # JavaScript/TypeScript - Prettier (Formatting)
+  # =============================================================================
+  - repo: https://github.com/pre-commit/mirrors-prettier
+    rev: v4.0.0-alpha.8
+    hooks:
+      - id: prettier
+        files: ^frontend/
+        types_or: [javascript, jsx, ts, tsx, json, css, scss, html, markdown]
+        additional_dependencies:
+          - prettier@3.4.2
+
+  # =============================================================================
+  # JavaScript/TypeScript - ESLint (Linting)
+  # =============================================================================
+  - repo: https://github.com/pre-commit/mirrors-eslint
+    rev: v9.17.0
+    hooks:
+      - id: eslint
+        files: ^frontend/.*\.[jt]sx?$
+        types: [file]
+        args: [--fix, --max-warnings=0]
+        additional_dependencies:
+          - eslint@9.17.0
+          - "@eslint/js@9.17.0"
+          - typescript@5.7.2
+          - typescript-eslint@8.18.2
+          - eslint-plugin-react-hooks@5.1.0
+          - eslint-plugin-react-refresh@0.4.16
+          - eslint-config-prettier@9.1.0
+          - globals@15.14.0
+
+  # =============================================================================
+  # Shell Scripts - ShellCheck
+  # =============================================================================
+  - repo: https://github.com/shellcheck-py/shellcheck-py
+    rev: v0.10.0.1
+    hooks:
+      - id: shellcheck
+        files: ^scripts/
+
+  # =============================================================================
+  # Docker - Hadolint (Dockerfile Linting)
+  # =============================================================================
+  - repo: https://github.com/hadolint/hadolint
+    rev: v2.12.0
+    hooks:
+      - id: hadolint-docker
+        entry: hadolint
+        args: [--ignore, DL3008, --ignore, DL3013]
+
+  # =============================================================================
+  # Security - Detect Secrets
+  # =============================================================================
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: v1.5.0
+    hooks:
+      - id: detect-secrets
+        args: [--baseline, .secrets.baseline]
+        exclude: package-lock\.json|\.secrets\.baseline
+
+  # =============================================================================
+  # YAML - Linting
+  # =============================================================================
+  - repo: https://github.com/adrienverge/yamllint
+    rev: v1.35.1
+    hooks:
+      - id: yamllint
+        args: [-c, .yamllint.yaml]
+        files: \.(yaml|yml)$
+
+# CI-specific settings
+ci:
+  autofix_commit_msg: "style: auto-fix by pre-commit hooks"
+  autofix_prs: true
+  autoupdate_branch: ""
+  autoupdate_commit_msg: "chore: update pre-commit hooks"
+  autoupdate_schedule: weekly
+  skip: []
+  submodules: false
