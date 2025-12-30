@@ -1,11 +1,16 @@
 /**
  * Interactive price chart using Plotly
+ * Uses CDN-loaded Plotly for faster builds on Raspberry Pi
  */
 
 import { useMemo } from 'react';
-import Plot from 'react-plotly.js';
+import createPlotlyComponent from 'react-plotly.js/factory';
 import type { PricePeriod, ConsumptionPeriod } from '../types';
 import { parseDate, getPriceColor } from '../utils/formatters';
+
+// Use the global Plotly object loaded from CDN
+// This avoids bundling the massive plotly.js library
+const Plot = createPlotlyComponent(window.Plotly);
 
 interface PriceChartProps {
   prices: PricePeriod[];
