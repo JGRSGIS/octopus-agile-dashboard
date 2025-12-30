@@ -15,8 +15,8 @@ import type {
   PriceStats,
 } from '../types';
 
-// API base URL - use environment variable or default to localhost
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+// API base URL - use environment variable or default to same origin (for production)
+const API_BASE_URL = import.meta.env.VITE_API_URL || '';
 
 // Create axios instance
 const apiClient: AxiosInstance = axios.create({
