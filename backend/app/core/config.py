@@ -4,9 +4,25 @@ Loads from environment variables and .env file.
 """
 
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+def find_env_file() -> Path | None:
+    """Find .env file in current directory or parent directories."""
+    current = Path.cwd()
+    # Check current directory first (backend/)
+    if (current / ".env").exists():
+        return current / ".env"
+    # Check parent directory (project root)
+    if (current.parent / ".env").exists():
+        return current.parent / ".env"
+    # Check if we're in project root
+    if (current / "backend" / "app").exists() and (current / ".env").exists():
+        return current / ".env"
+    return None
 
 
 class Settings(BaseSettings):
@@ -79,16 +95,19 @@ class Settings(BaseSettings):
         """Generate the prices API URL."""
         return f"{self.OCTOPUS_API_BASE_URL}/products/{self.PRODUCT_CODE}/electricity-tariffs/{self.tariff_code}/standard-unit-rates/"
 
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        case_sensitive = True
+    # Use SettingsConfigDict for pydantic-settings v2
+    model_config = SettingsConfigDict(
+        env_file=find_env_file(),
+        env_file_encoding="utf-8",
+        case_sensitive=True,
+        extra="ignore",  # Allow extra fields like VITE_API_URL from shared .env
+    )
 
 
 @lru_cache
 def get_settings() -> Settings:
     """Get cached settings instance."""
-    return Settings()
+    return Settings(_env_file=find_env_file())
 
 
 settings = get_settings()

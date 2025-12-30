@@ -105,8 +105,9 @@ source venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 
-# Initialize database (tables are auto-created on startup)
-# Note: alembic upgrade head can be run for explicit migration control
+# Run database migrations
+echo "Running database migrations..."
+alembic upgrade head
 
 echo -e "${GREEN}Backend setup complete${NC}"
 
