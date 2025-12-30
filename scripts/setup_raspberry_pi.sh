@@ -114,7 +114,34 @@ echo -e "${GREEN}Backend setup complete${NC}"
 echo -e "${YELLOW}Step 6: Setting up frontend...${NC}"
 
 cd "$PROJECT_DIR/frontend"
+
+# Check available memory and swap
+TOTAL_MEM=$(free -m | awk '/^Mem:/{print $2}')
+SWAP_SIZE=$(free -m | awk '/^Swap:/{print $2}')
+
+echo "Available RAM: ${TOTAL_MEM}MB, Swap: ${SWAP_SIZE}MB"
+
+# If low memory and no swap, create temporary swap
+if [ "$TOTAL_MEM" -lt 2048 ] && [ "$SWAP_SIZE" -lt 1024 ]; then
+    echo -e "${YELLOW}Low memory detected. Creating temporary swap file...${NC}"
+    if [ ! -f /swapfile ]; then
+        sudo fallocate -l 2G /swapfile 2>/dev/null || sudo dd if=/dev/zero of=/swapfile bs=1M count=2048
+        sudo chmod 600 /swapfile
+        sudo mkswap /swapfile
+        sudo swapon /swapfile
+        echo -e "${GREEN}Swap file created and enabled${NC}"
+    else
+        sudo swapon /swapfile 2>/dev/null || true
+        echo "Existing swap file enabled"
+    fi
+fi
+
+# Install dependencies
 npm install
+
+# Build with memory-constrained Node.js settings for Raspberry Pi
+echo "Building frontend with memory-optimized settings..."
+export NODE_OPTIONS="--max-old-space-size=512"
 npm run build
 
 echo -e "${GREEN}Frontend build complete${NC}"
