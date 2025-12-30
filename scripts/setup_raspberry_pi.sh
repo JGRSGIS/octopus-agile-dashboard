@@ -68,6 +68,8 @@ echo ""
 sudo -u postgres psql -c "CREATE USER octopus WITH PASSWORD '$DB_PASSWORD';" 2>/dev/null || true
 sudo -u postgres psql -c "CREATE DATABASE octopus_agile OWNER octopus;" 2>/dev/null || true
 sudo -u postgres psql -c "GRANT ALL PRIVILEGES ON DATABASE octopus_agile TO octopus;"
+# PostgreSQL 15+ requires explicit schema permissions
+sudo -u postgres psql -d octopus_agile -c "GRANT ALL ON SCHEMA public TO octopus;"
 
 echo -e "${GREEN}Database created successfully${NC}"
 
