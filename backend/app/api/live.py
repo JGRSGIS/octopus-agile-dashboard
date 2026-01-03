@@ -27,7 +27,7 @@ class TelemetryReading(BaseModel):
 
     read_at: str
     consumption_delta: float | None  # kWh consumed in period
-    demand: float | None  # Current power demand in kW
+    demand: float | None  # Current power demand in watts
     cost_delta: float | None  # Cost in period (pence)
     consumption: float | None  # Cumulative consumption
 
@@ -97,12 +97,13 @@ def calculate_stats(readings: list[TelemetryReading]) -> dict:
     stats = {}
 
     if demands:
+        # API returns demand in watts, convert to kW for kw fields
         stats["demand"] = {
-            "current_kw": demands[-1] if demands else None,
-            "current_watts": int(demands[-1] * 1000) if demands else None,
-            "average_kw": sum(demands) / len(demands),
-            "peak_kw": max(demands),
-            "min_kw": min(demands),
+            "current_kw": demands[-1] / 1000 if demands else None,
+            "current_watts": int(demands[-1]) if demands else None,
+            "average_kw": sum(demands) / len(demands) / 1000,
+            "peak_kw": max(demands) / 1000,
+            "min_kw": min(demands) / 1000,
         }
 
     if consumptions:
@@ -167,8 +168,9 @@ async def get_current_reading():
 
         if reading:
             transformed = transform_telemetry(reading)
-            demand_kw = transformed.demand
-            demand_watts = int(demand_kw * 1000) if demand_kw is not None else None
+            # API returns demand in watts, convert to kW for kw field
+            demand_watts = int(transformed.demand) if transformed.demand is not None else None
+            demand_kw = transformed.demand / 1000 if transformed.demand is not None else None
 
             return LatestReadingResponse(
                 timestamp=datetime.now(UTC).isoformat(),
@@ -265,8 +267,9 @@ async def get_live_dashboard():
         current = None
         if transformed:
             latest = transformed[-1]
-            demand_kw = latest.demand
-            demand_watts = int(demand_kw * 1000) if demand_kw is not None else None
+            # API returns demand in watts, convert to kW for kw field
+            demand_watts = int(latest.demand) if latest.demand is not None else None
+            demand_kw = latest.demand / 1000 if latest.demand is not None else None
             current = LatestReadingResponse(
                 timestamp=datetime.now(UTC).isoformat(),
                 reading=latest,
@@ -307,8 +310,9 @@ async def stream_telemetry(
 
                 if reading:
                     transformed = transform_telemetry(reading)
-                    demand_kw = transformed.demand
-                    demand_watts = int(demand_kw * 1000) if demand_kw is not None else None
+                    # API returns demand in watts, convert to kW for kw field
+                    demand_watts = int(transformed.demand) if transformed.demand is not None else None
+                    demand_kw = transformed.demand / 1000 if transformed.demand is not None else None
 
                     # Format as SSE event
                     import json
