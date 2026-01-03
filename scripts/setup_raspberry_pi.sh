@@ -40,6 +40,18 @@ sudo apt update && sudo apt upgrade -y
 # Step 2: Install Dependencies
 # ============================================
 echo -e "${YELLOW}Step 2: Installing dependencies...${NC}"
+
+# Fix any broken packages first
+sudo apt --fix-broken install -y || true
+
+# Check if nginx is in a broken state and fix it
+if dpkg -l nginx 2>/dev/null | grep -q '^iF'; then
+    echo -e "${YELLOW}Detected broken nginx installation, fixing...${NC}"
+    sudo apt purge -y nginx nginx-common nginx-core 2>/dev/null || true
+    sudo apt autoremove -y
+fi
+
+# Install dependencies (excluding nginx initially)
 sudo apt install -y \
     python3-pip \
     python3-venv \
@@ -47,9 +59,35 @@ sudo apt install -y \
     npm \
     postgresql \
     postgresql-contrib \
-    nginx \
     git \
     curl
+
+# Install nginx separately with error handling
+echo "Installing nginx..."
+if ! sudo apt install -y nginx; then
+    echo -e "${YELLOW}Nginx installation failed, attempting recovery...${NC}"
+    # Purge any partial nginx installation
+    sudo apt purge -y nginx nginx-common nginx-core 2>/dev/null || true
+    sudo rm -rf /etc/nginx 2>/dev/null || true
+    sudo apt autoremove -y
+    sudo apt update
+    # Try installing again
+    if ! sudo apt install -y nginx; then
+        echo -e "${RED}Failed to install nginx. Please run manually:${NC}"
+        echo "  sudo apt purge nginx nginx-common"
+        echo "  sudo apt install nginx"
+        exit 1
+    fi
+fi
+
+# Verify nginx configuration exists
+if [ ! -f /etc/nginx/nginx.conf ]; then
+    echo -e "${RED}Error: nginx.conf not found after installation${NC}"
+    echo "Attempting to reinstall nginx-common..."
+    sudo apt install --reinstall -y nginx-common nginx-core
+fi
+
+echo -e "${GREEN}All dependencies installed${NC}"
 
 # ============================================
 # Step 3: Setup PostgreSQL
@@ -218,11 +256,23 @@ sudo ln -sf /etc/nginx/sites-available/octopus-agile /etc/nginx/sites-enabled/
 sudo rm -f /etc/nginx/sites-enabled/default
 
 # Test and restart nginx
-sudo nginx -t
+if ! sudo nginx -t; then
+    echo -e "${RED}Nginx configuration test failed${NC}"
+    echo "Please check the configuration manually"
+    exit 1
+fi
+
 sudo systemctl restart nginx
 sudo systemctl enable nginx
 
-echo -e "${GREEN}Nginx configured${NC}"
+# Verify nginx is running
+if ! systemctl is-active --quiet nginx; then
+    echo -e "${RED}Warning: Nginx failed to start${NC}"
+    echo "Check status with: sudo systemctl status nginx"
+    echo "Check logs with: sudo journalctl -xeu nginx.service"
+else
+    echo -e "${GREEN}Nginx configured and running${NC}"
+fi
 
 # ============================================
 # Step 9: Setup Cron Jobs
