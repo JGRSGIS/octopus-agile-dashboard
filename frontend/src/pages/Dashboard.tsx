@@ -10,9 +10,10 @@ import CurrentPrice from '../components/CurrentPrice';
 import PriceChart from '../components/PriceChart';
 import StatsCards from '../components/StatsCards';
 import DataTable from '../components/DataTable';
+import LiveTab from '../components/LiveTab';
 import { formatRelativeTime } from '../utils/formatters';
 
-type TabType = 'overview' | 'prices' | 'consumption' | 'analysis';
+type TabType = 'overview' | 'prices' | 'consumption' | 'analysis' | 'live';
 
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -130,7 +131,7 @@ export function Dashboard() {
 
           {/* Navigation tabs */}
           <nav className="flex gap-1 mt-4 -mb-4">
-            {(['overview', 'prices', 'consumption', 'analysis'] as TabType[]).map((tab) => (
+            {(['overview', 'prices', 'consumption', 'analysis', 'live'] as TabType[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -138,8 +139,11 @@ export function Dashboard() {
                   activeTab === tab
                     ? 'bg-gray-900 text-white border-t border-x border-gray-700'
                     : 'text-gray-400 hover:text-gray-200 hover:bg-gray-700/50'
-                }`}
+                } ${tab === 'live' ? 'flex items-center gap-1' : ''}`}
               >
+                {tab === 'live' && (
+                  <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse" />
+                )}
                 {tab.charAt(0).toUpperCase() + tab.slice(1)}
               </button>
             ))}
@@ -247,6 +251,10 @@ export function Dashboard() {
             <DataTable data={dashboardData.cost_analysis.cost_by_period} type="cost" height={500} />
           </div>
         )}
+
+        {activeTab === 'live' && (
+          <LiveTab currentPrice={dashboardData.current_price} />
+        )}
       </main>
 
       {/* Footer */}
@@ -265,7 +273,7 @@ export function Dashboard() {
               </a>{' '}
               API
             </p>
-            <p>Prices update every 30 minutes • Consumption may have 24-48h delay</p>
+            <p>Prices update every 30 minutes • Consumption may have 24-48h delay • Live data via Home Mini</p>
           </div>
         </div>
       </footer>

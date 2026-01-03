@@ -188,4 +188,81 @@ export interface HealthResponse {
   version: string;
   region: string;
   cache_enabled: boolean;
+  home_mini_available?: boolean;
+}
+
+// ============ Live Monitoring Types ============
+
+// Single telemetry reading from Home Mini
+export interface TelemetryReading {
+  read_at: string;
+  consumption_delta: number | null; // kWh consumed in period
+  demand: number | null; // Current power demand in kW
+  cost_delta: number | null; // Cost in period (pence)
+  consumption: number | null; // Cumulative consumption
+}
+
+// Live status response
+export interface LiveStatusResponse {
+  available: boolean;
+  device_id: string | null;
+  message: string;
+}
+
+// Latest reading response
+export interface LatestReadingResponse {
+  timestamp: string;
+  reading: TelemetryReading | null;
+  current_demand_kw: number | null;
+  current_demand_watts: number | null;
+}
+
+// Telemetry response
+export interface TelemetryResponse {
+  device_id: string | null;
+  start: string;
+  end: string;
+  grouping: string;
+  count: number;
+  readings: TelemetryReading[];
+  summary: TelemetrySummary | null;
+}
+
+// Telemetry summary statistics
+export interface TelemetrySummary {
+  demand?: {
+    current_kw: number | null;
+    current_watts: number | null;
+    average_kw: number;
+    peak_kw: number;
+    min_kw: number;
+  };
+  consumption?: {
+    total_kwh: number;
+    period_count: number;
+  };
+  cost?: {
+    total_pence: number;
+    total_pounds: number;
+  };
+}
+
+// Live dashboard response
+export interface LiveDashboardResponse {
+  timestamp: string;
+  available: boolean;
+  current: LatestReadingResponse | null;
+  recent_readings: TelemetryReading[];
+  stats: TelemetrySummary | null;
+}
+
+// SSE event data
+export interface LiveStreamEvent {
+  timestamp: string;
+  read_at: string;
+  demand_kw: number | null;
+  demand_watts: number | null;
+  consumption_delta: number | null;
+  cost_delta: number | null;
+  error?: string;
 }
