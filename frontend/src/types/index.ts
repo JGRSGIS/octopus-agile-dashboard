@@ -197,7 +197,7 @@ export interface HealthResponse {
 export interface TelemetryReading {
   read_at: string;
   consumption_delta: number | null; // kWh consumed in period
-  demand: number | null; // Current power demand in kW
+  demand: number | null; // Current power demand in watts
   cost_delta: number | null; // Cost in period (pence)
   consumption: number | null; // Cumulative consumption
 }

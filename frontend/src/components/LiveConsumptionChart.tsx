@@ -56,7 +56,7 @@ export function LiveConsumptionChart({
 
     // Prepare data for plotting
     const times = readings.map((r) => formatTime(r.read_at));
-    const demands = readings.map((r) => (r.demand !== null ? r.demand * 1000 : 0)); // Convert to watts
+    const demands = readings.map((r) => (r.demand !== null ? r.demand : 0)); // Already in watts
 
     // Color based on demand level
     const colors = demands.map((d) => {
