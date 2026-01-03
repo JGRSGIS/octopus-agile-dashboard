@@ -129,7 +129,7 @@ export function LiveTab({ currentPrice }: LiveTabProps) {
           <div className="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
             <div className="text-xs text-gray-500 mb-1">Current Demand</div>
             <div className="text-xl font-bold text-blue-400">
-              {liveData.stats.demand?.current_watts !== null
+              {liveData.stats.demand?.current_watts != null
                 ? `${liveData.stats.demand.current_watts} W`
                 : '--'}
             </div>

@@ -94,7 +94,7 @@ export function LiveCostTracker({
           <div className="text-2xl font-bold text-blue-400">
             {hourlyCostEstimate !== null ? `${hourlyCostEstimate.toFixed(1)}p/hr` : '--'}
           </div>
-          {currentPrice !== null && (
+          {currentPrice != null && (
             <div className="text-xs text-gray-500 mt-1">@ {currentPrice.toFixed(2)}p/kWh</div>
           )}
         </div>
@@ -131,7 +131,7 @@ export function LiveCostTracker({
       </div>
 
       {/* Current price info */}
-      {currentPrice !== null && (
+      {currentPrice != null && (
         <div className="mt-4 pt-4 border-t border-gray-700">
           <div className="flex items-center justify-between text-sm">
             <div className="flex items-center gap-2 text-gray-400">
