@@ -30,6 +30,9 @@ class Settings(BaseSettings):
 
     # Octopus Energy API Configuration
     OCTOPUS_API_KEY: str = Field(default="", description="Octopus Energy API key")
+    OCTOPUS_ACCOUNT_NUMBER: str = Field(
+        default="", description="Octopus Energy account number (e.g., A-1234ABCD)"
+    )
     MPAN: str = Field(default="", description="Meter Point Administration Number")
     SERIAL_NUMBER: str = Field(default="", description="Meter serial number")
 

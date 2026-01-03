@@ -4,7 +4,7 @@
 
 import type { UseQueryResult } from '@tanstack/react-query';
 import { useQuery } from '@tanstack/react-query';
-import { pricesApi, consumptionApi, analysisApi, healthApi } from '../services/api';
+import { pricesApi, consumptionApi, analysisApi, healthApi, liveApi } from '../services/api';
 import type {
   PricesResponse,
   CurrentPriceResponse,
@@ -14,6 +14,10 @@ import type {
   PeriodSummary,
   HealthResponse,
   PriceStats,
+  LiveStatusResponse,
+  LatestReadingResponse,
+  TelemetryResponse,
+  LiveDashboardResponse,
 } from '../types';
 
 // Query key factory
@@ -39,6 +43,13 @@ export const queryKeys = {
       [...queryKeys.analysis.all, 'recommendations', hours] as const,
   },
   health: ['health'] as const,
+  live: {
+    all: ['live'] as const,
+    status: () => [...queryKeys.live.all, 'status'] as const,
+    current: () => [...queryKeys.live.all, 'current'] as const,
+    telemetry: (minutes: number) => [...queryKeys.live.all, 'telemetry', minutes] as const,
+    dashboard: () => [...queryKeys.live.all, 'dashboard'] as const,
+  },
 };
 
 // ============ Price Hooks ============
@@ -183,5 +194,66 @@ export function useHealth(): UseQueryResult<HealthResponse, Error> {
     queryFn: () => healthApi.check(),
     staleTime: 60 * 1000,
     retry: 3,
+  });
+}
+
+// ============ Live Monitoring Hooks ============
+
+/**
+ * Check if live monitoring is available
+ */
+export function useLiveStatus(): UseQueryResult<LiveStatusResponse, Error> {
+  return useQuery({
+    queryKey: queryKeys.live.status(),
+    queryFn: () => liveApi.getStatus(),
+    staleTime: 60 * 1000, // 1 minute
+    retry: 2,
+  });
+}
+
+/**
+ * Get the current/latest telemetry reading
+ * Refetches every 10 seconds for near real-time updates
+ */
+export function useLiveCurrentReading(enabled: boolean = true): UseQueryResult<LatestReadingResponse, Error> {
+  return useQuery({
+    queryKey: queryKeys.live.current(),
+    queryFn: () => liveApi.getCurrentReading(),
+    refetchInterval: 10 * 1000, // Refetch every 10 seconds
+    staleTime: 5 * 1000, // Consider stale after 5 seconds
+    enabled,
+    retry: 1,
+  });
+}
+
+/**
+ * Get telemetry data for a time period
+ */
+export function useLiveTelemetry(
+  minutes: number = 5,
+  enabled: boolean = true
+): UseQueryResult<TelemetryResponse, Error> {
+  return useQuery({
+    queryKey: queryKeys.live.telemetry(minutes),
+    queryFn: () => liveApi.getTelemetry(minutes),
+    refetchInterval: 10 * 1000, // Refetch every 10 seconds
+    staleTime: 5 * 1000,
+    enabled,
+    retry: 1,
+  });
+}
+
+/**
+ * Get complete live dashboard data
+ * Refetches every 10 seconds for near real-time updates
+ */
+export function useLiveDashboard(enabled: boolean = true): UseQueryResult<LiveDashboardResponse, Error> {
+  return useQuery({
+    queryKey: queryKeys.live.dashboard(),
+    queryFn: () => liveApi.getDashboard(),
+    refetchInterval: 10 * 1000, // Refetch every 10 seconds
+    staleTime: 5 * 1000,
+    enabled,
+    retry: 1,
   });
 }

@@ -14,6 +14,10 @@ import type {
   HealthResponse,
   ApiError,
   PriceStats,
+  LiveStatusResponse,
+  LatestReadingResponse,
+  TelemetryResponse,
+  LiveDashboardResponse,
 } from '../types';
 
 // API base URL - use environment variable or default to same origin (for production)
@@ -255,3 +259,64 @@ export const healthApi = {
 
 // Export default client for custom requests
 export default apiClient;
+
+// ============ Live Monitoring API ============
+
+export const liveApi = {
+  /**
+   * Check if live monitoring is available
+   */
+  async getStatus(): Promise<LiveStatusResponse> {
+    try {
+      const response = await apiClient.get<LiveStatusResponse>('/live/status');
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error as AxiosError<ApiError>);
+    }
+  },
+
+  /**
+   * Get the current/latest telemetry reading
+   */
+  async getCurrentReading(): Promise<LatestReadingResponse> {
+    try {
+      const response = await apiClient.get<LatestReadingResponse>('/live/current');
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error as AxiosError<ApiError>);
+    }
+  },
+
+  /**
+   * Get telemetry data for a time period
+   */
+  async getTelemetry(minutes: number = 5, grouping: string = 'TEN_SECONDS'): Promise<TelemetryResponse> {
+    try {
+      const response = await apiClient.get<TelemetryResponse>('/live/telemetry', {
+        params: { minutes, grouping },
+      });
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error as AxiosError<ApiError>);
+    }
+  },
+
+  /**
+   * Get complete live dashboard data
+   */
+  async getDashboard(): Promise<LiveDashboardResponse> {
+    try {
+      const response = await apiClient.get<LiveDashboardResponse>('/live/dashboard');
+      return response.data;
+    } catch (error) {
+      throw handleApiError(error as AxiosError<ApiError>);
+    }
+  },
+
+  /**
+   * Get the SSE stream URL for real-time updates
+   */
+  getStreamUrl(interval: number = 10): string {
+    return `${API_BASE_URL}/api/live/stream?interval=${interval}`;
+  },
+};
