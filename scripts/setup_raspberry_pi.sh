@@ -98,6 +98,25 @@ echo -e "${YELLOW}Step 3: Setting up PostgreSQL...${NC}"
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
 
+# Wait for PostgreSQL to be ready
+echo "Waiting for PostgreSQL to be ready..."
+MAX_ATTEMPTS=30
+ATTEMPT=0
+while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+    if sudo -u postgres pg_isready -q 2>/dev/null; then
+        echo -e "${GREEN}PostgreSQL is ready${NC}"
+        break
+    fi
+    ATTEMPT=$((ATTEMPT + 1))
+    if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+        echo -e "${RED}PostgreSQL failed to start within 30 seconds${NC}"
+        echo "Check status with: sudo systemctl status postgresql"
+        echo "Check logs with: sudo journalctl -xeu postgresql.service"
+        exit 1
+    fi
+    sleep 1
+done
+
 # Create database and user (will prompt for password)
 echo "Creating database..."
 read -sp "Enter password for database user 'octopus': " DB_PASSWORD
