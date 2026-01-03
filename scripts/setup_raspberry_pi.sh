@@ -94,24 +94,72 @@ echo -e "${GREEN}All dependencies installed${NC}"
 # ============================================
 echo -e "${YELLOW}Step 3: Setting up PostgreSQL...${NC}"
 
+# Get PostgreSQL version
+PG_VERSION=$(ls /usr/lib/postgresql/ 2>/dev/null | sort -V | tail -n1)
+if [ -z "$PG_VERSION" ]; then
+    echo -e "${RED}PostgreSQL installation not found${NC}"
+    exit 1
+fi
+echo "PostgreSQL version: $PG_VERSION"
+
+# Check if the main cluster exists and is initialized
+PG_CLUSTER_DIR="/var/lib/postgresql/$PG_VERSION/main"
+if [ ! -d "$PG_CLUSTER_DIR" ] || [ ! -f "$PG_CLUSTER_DIR/PG_VERSION" ]; then
+    echo -e "${YELLOW}PostgreSQL cluster not initialized, creating...${NC}"
+    # Stop any running postgresql service first
+    sudo systemctl stop postgresql 2>/dev/null || true
+    # Create the cluster
+    sudo pg_dropcluster --stop $PG_VERSION main 2>/dev/null || true
+    sudo pg_createcluster $PG_VERSION main --start
+    echo -e "${GREEN}PostgreSQL cluster created${NC}"
+else
+    echo "PostgreSQL cluster exists at $PG_CLUSTER_DIR"
+fi
+
+# Ensure PostgreSQL service is stopped before starting fresh
+sudo systemctl stop postgresql 2>/dev/null || true
+sleep 1
+
 # Start PostgreSQL
+echo "Starting PostgreSQL service..."
 sudo systemctl start postgresql
 sudo systemctl enable postgresql
 
 # Wait for PostgreSQL to be ready
 echo "Waiting for PostgreSQL to be ready..."
-MAX_ATTEMPTS=30
+MAX_ATTEMPTS=60
 ATTEMPT=0
 while [ $ATTEMPT -lt $MAX_ATTEMPTS ]; do
+    # Check if the service is actually running
+    if ! systemctl is-active --quiet postgresql; then
+        if [ $ATTEMPT -eq 0 ]; then
+            # First attempt - service might still be starting
+            sleep 1
+            ATTEMPT=$((ATTEMPT + 1))
+            continue
+        fi
+        echo -e "${RED}PostgreSQL service is not running${NC}"
+        echo "Attempting to diagnose the issue..."
+        sudo systemctl status postgresql --no-pager || true
+        echo ""
+        echo "Checking PostgreSQL logs:"
+        sudo journalctl -xeu postgresql@$PG_VERSION-main.service --no-pager -n 20 || true
+        exit 1
+    fi
+
+    # Service is running, check if it's accepting connections
     if sudo -u postgres pg_isready -q 2>/dev/null; then
         echo -e "${GREEN}PostgreSQL is ready${NC}"
         break
     fi
+
     ATTEMPT=$((ATTEMPT + 1))
     if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
-        echo -e "${RED}PostgreSQL failed to start within 30 seconds${NC}"
-        echo "Check status with: sudo systemctl status postgresql"
-        echo "Check logs with: sudo journalctl -xeu postgresql.service"
+        echo -e "${RED}PostgreSQL failed to accept connections within 60 seconds${NC}"
+        echo "Service status:"
+        sudo systemctl status postgresql --no-pager || true
+        echo ""
+        echo "Check logs with: sudo journalctl -xeu postgresql@$PG_VERSION-main.service"
         exit 1
     fi
     sleep 1
