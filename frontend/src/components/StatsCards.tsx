@@ -180,9 +180,9 @@ export function StatsCards({
               colorClass="text-blue-400"
             />
             <StatCard
-              title="vs Flat Rate"
+              title="vs Fixed Tariff"
               value={formatSavings(costAnalysis.savings_vs_flat_rate)}
-              subtitle="compared to 24.5p/kWh"
+              subtitle="vs Fixed 25.68p/kWh"
               icon={
                 costAnalysis.savings_vs_flat_rate >= 0 ? (
                   <TrendingDown className="w-5 h-5" />

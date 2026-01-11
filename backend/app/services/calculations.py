@@ -71,6 +71,14 @@ class CostAnalysis:
     cost_by_period: list[dict[str, Any]]
     cheapest_hours: list[dict[str, Any]]
     most_expensive_hours: list[dict[str, Any]]
+    # Tariff comparison fields
+    fixed_tariff_unit_rate: float = 25.68  # Octopus 12M Fixed Sep 2025 v1
+    fixed_tariff_standing_charge: float = 43.66  # p/day
+    agile_standing_charge: float = 62.22  # p/day for Southampton
+    days_in_period: int = 0
+    fixed_total_cost_pence: float = 0.0
+    agile_total_cost_pence: float = 0.0
+    daily_comparison: list[dict[str, Any]] | None = None
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -82,6 +90,18 @@ class CostAnalysis:
             "cost_by_period": self.cost_by_period,
             "cheapest_hours": self.cheapest_hours[:5],
             "most_expensive_hours": self.most_expensive_hours[:5],
+            # Tariff comparison data
+            "fixed_tariff_unit_rate": self.fixed_tariff_unit_rate,
+            "fixed_tariff_standing_charge": self.fixed_tariff_standing_charge,
+            "agile_standing_charge": self.agile_standing_charge,
+            "days_in_period": self.days_in_period,
+            "fixed_total_cost_pence": round(self.fixed_total_cost_pence, 2),
+            "fixed_total_cost_pounds": round(self.fixed_total_cost_pence / 100, 2),
+            "agile_total_cost_pence": round(self.agile_total_cost_pence, 2),
+            "agile_total_cost_pounds": round(self.agile_total_cost_pence / 100, 2),
+            "agile_savings_pence": round(self.fixed_total_cost_pence - self.agile_total_cost_pence, 2),
+            "agile_savings_pounds": round((self.fixed_total_cost_pence - self.agile_total_cost_pence) / 100, 2),
+            "daily_comparison": self.daily_comparison or [],
         }
 
 
@@ -181,7 +201,9 @@ def calculate_consumption_statistics(
 def calculate_cost_analysis(
     prices: list[dict[str, Any]],
     consumption: list[dict[str, Any]],
-    flat_rate_pence: float = 24.50,  # Typical SVT rate for comparison
+    flat_rate_pence: float = 25.68,  # Octopus 12M Fixed September 2025 v1 rate
+    fixed_standing_charge_pence: float = 43.66,  # Fixed tariff standing charge p/day
+    agile_standing_charge_pence: float = 62.22,  # Agile standing charge p/day (Southampton)
 ) -> CostAnalysis:
     """
     Calculate cost analysis by matching consumption to prices.
@@ -189,10 +211,12 @@ def calculate_cost_analysis(
     Args:
         prices: List of price periods
         consumption: List of consumption periods
-        flat_rate_pence: Flat rate to compare against (default: typical SVT)
+        flat_rate_pence: Flat rate to compare against (default: Octopus 12M Fixed Sep 2025 v1)
+        fixed_standing_charge_pence: Daily standing charge for fixed tariff (p/day)
+        agile_standing_charge_pence: Daily standing charge for Agile tariff (p/day)
 
     Returns:
-        CostAnalysis object with cost breakdown
+        CostAnalysis object with cost breakdown and tariff comparison
     """
     if not prices or not consumption:
         return CostAnalysis(
@@ -218,16 +242,32 @@ def calculate_cost_analysis(
     cost_by_period = []
     total_cost = 0.0
     total_kwh = 0.0
+    daily_costs: dict[str, dict[str, Any]] = {}  # Track costs by day
 
     for c in consumption:
         interval_start = c["interval_start"]
         if isinstance(interval_start, str):
             interval_key = interval_start[:16]
+            dt = datetime.fromisoformat(interval_start.replace("Z", "+00:00"))
         else:
             interval_key = interval_start.strftime("%Y-%m-%dT%H:%M")
+            dt = interval_start
 
+        date_key = dt.strftime("%Y-%m-%d")
         kwh = c["consumption"]
         total_kwh += kwh
+
+        # Initialize daily tracking
+        if date_key not in daily_costs:
+            daily_costs[date_key] = {
+                "date": date_key,
+                "kwh": 0.0,
+                "agile_unit_cost": 0.0,
+                "fixed_unit_cost": 0.0,
+            }
+
+        daily_costs[date_key]["kwh"] += kwh
+        daily_costs[date_key]["fixed_unit_cost"] += kwh * flat_rate_pence
 
         # Find matching price
         price = price_lookup.get(interval_key)
@@ -235,6 +275,7 @@ def calculate_cost_analysis(
         if price is not None:
             cost = kwh * price
             total_cost += cost
+            daily_costs[date_key]["agile_unit_cost"] += cost
 
             cost_by_period.append(
                 {
@@ -249,9 +290,34 @@ def calculate_cost_analysis(
     # Calculate weighted average price
     weighted_avg = total_cost / total_kwh if total_kwh > 0 else 0
 
-    # Calculate savings vs flat rate
+    # Calculate savings vs flat rate (unit costs only, for backward compatibility)
     flat_rate_cost = total_kwh * flat_rate_pence
     savings = flat_rate_cost - total_cost
+
+    # Calculate number of days in period
+    days_in_period = len(daily_costs)
+
+    # Calculate total costs including standing charges
+    fixed_total = flat_rate_cost + (days_in_period * fixed_standing_charge_pence)
+    agile_total = total_cost + (days_in_period * agile_standing_charge_pence)
+
+    # Build daily comparison data
+    daily_comparison = []
+    for date_key in sorted(daily_costs.keys()):
+        day_data = daily_costs[date_key]
+        # Add standing charges to each day
+        day_fixed_total = day_data["fixed_unit_cost"] + fixed_standing_charge_pence
+        day_agile_total = day_data["agile_unit_cost"] + agile_standing_charge_pence
+        day_savings = day_fixed_total - day_agile_total
+
+        daily_comparison.append({
+            "date": date_key,
+            "kwh": round(day_data["kwh"], 3),
+            "fixed_cost_pence": round(day_fixed_total, 2),
+            "agile_cost_pence": round(day_agile_total, 2),
+            "savings_pence": round(day_savings, 2),
+            "agile_cheaper": day_savings > 0,
+        })
 
     # Sort by cost per kWh (effective price paid)
     sorted_by_cost = sorted(
@@ -267,6 +333,13 @@ def calculate_cost_analysis(
         cost_by_period=cost_by_period,
         cheapest_hours=sorted_by_cost[:5],
         most_expensive_hours=list(reversed(sorted_by_cost[-5:])),
+        fixed_tariff_unit_rate=flat_rate_pence,
+        fixed_tariff_standing_charge=fixed_standing_charge_pence,
+        agile_standing_charge=agile_standing_charge_pence,
+        days_in_period=days_in_period,
+        fixed_total_cost_pence=fixed_total,
+        agile_total_cost_pence=agile_total,
+        daily_comparison=daily_comparison,
     )
 
 

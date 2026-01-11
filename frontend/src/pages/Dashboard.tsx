@@ -11,9 +11,10 @@ import PriceChart from '../components/PriceChart';
 import StatsCards from '../components/StatsCards';
 import DataTable from '../components/DataTable';
 import LiveTab from '../components/LiveTab';
+import AgileComparison from '../components/AgileComparison';
 import { formatRelativeTime } from '../utils/formatters';
 
-type TabType = 'overview' | 'prices' | 'consumption' | 'analysis' | 'live';
+type TabType = 'overview' | 'prices' | 'consumption' | 'analysis' | 'comparison' | 'live';
 
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -131,7 +132,7 @@ export function Dashboard() {
 
           {/* Navigation tabs */}
           <nav className="flex gap-1 mt-4 -mb-4">
-            {(['overview', 'prices', 'consumption', 'analysis', 'live'] as TabType[]).map((tab) => (
+            {(['overview', 'prices', 'consumption', 'analysis', 'comparison', 'live'] as TabType[]).map((tab) => (
               <button
                 key={tab}
                 onClick={() => setActiveTab(tab)}
@@ -250,6 +251,10 @@ export function Dashboard() {
 
             <DataTable data={dashboardData.cost_analysis.cost_by_period} type="cost" height={500} />
           </div>
+        )}
+
+        {activeTab === 'comparison' && (
+          <AgileComparison costAnalysis={dashboardData.cost_analysis} />
         )}
 
         {activeTab === 'live' && (

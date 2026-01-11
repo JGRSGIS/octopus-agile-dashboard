@@ -43,8 +43,8 @@ async def get_cost_analysis(
         None, description="End of period. Defaults to now."
     ),
     flat_rate_comparison: float = Query(
-        24.50,
-        description="Flat rate (p/kWh) to compare against. Default: 24.50p (typical SVT)",
+        25.68,
+        description="Flat rate (p/kWh) to compare against. Default: 25.68p (Octopus 12M Fixed Sep 2025 v1)",
     ),
     _: None = Depends(check_full_config),
 ) -> dict[str, Any]:
