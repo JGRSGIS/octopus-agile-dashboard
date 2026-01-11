@@ -50,6 +50,28 @@ export interface CostAnalysis {
   cost_by_period: CostPeriod[];
   cheapest_hours: CostPeriod[];
   most_expensive_hours: CostPeriod[];
+  // Tariff comparison fields
+  fixed_tariff_unit_rate: number;
+  fixed_tariff_standing_charge: number;
+  agile_standing_charge: number;
+  days_in_period: number;
+  fixed_total_cost_pence: number;
+  fixed_total_cost_pounds: number;
+  agile_total_cost_pence: number;
+  agile_total_cost_pounds: number;
+  agile_savings_pence: number;
+  agile_savings_pounds: number;
+  daily_comparison: DailyComparison[];
+}
+
+// Daily tariff comparison
+export interface DailyComparison {
+  date: string;
+  kwh: number;
+  fixed_cost_pence: number;
+  agile_cost_pence: number;
+  savings_pence: number;
+  agile_cheaper: boolean;
 }
 
 export interface CostPeriod {
