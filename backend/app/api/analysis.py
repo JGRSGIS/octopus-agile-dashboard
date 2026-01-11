@@ -177,7 +177,7 @@ async def get_dashboard_data(
     try:
         now = datetime.now(UTC)
 
-        # Fetch current prices (48 hour window)
+        # Fetch current prices (48 hour window) for display
         prices_from = now - timedelta(hours=24)
         prices_to = now + timedelta(hours=24)
         prices = await octopus_client.fetch_prices(
@@ -187,6 +187,11 @@ async def get_dashboard_data(
         # Fetch recent consumption (7 days)
         consumption_from = now - timedelta(days=7)
         consumption = await octopus_client.fetch_consumption(
+            period_from=consumption_from, period_to=now
+        )
+
+        # Fetch 7-day price history to match consumption period for cost analysis
+        prices_7d = await octopus_client.fetch_prices(
             period_from=consumption_from, period_to=now
         )
 
@@ -211,8 +216,8 @@ async def get_dashboard_data(
         price_stats = calculate_price_statistics(today_prices)
         consumption_stats = calculate_consumption_statistics(today_consumption)
 
-        # Cost for matched periods
-        cost_analysis = calculate_cost_analysis(prices, consumption)
+        # Cost for matched periods (using 7-day prices to match 7-day consumption)
+        cost_analysis = calculate_cost_analysis(prices_7d, consumption)
 
         return {
             "timestamp": now.isoformat(),
