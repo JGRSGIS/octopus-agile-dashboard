@@ -18,6 +18,7 @@ interface PriceChartProps {
   title?: string;
   height?: number;
   showConsumption?: boolean;
+  showRunningTotal?: boolean;
 }
 
 export function PriceChart({
@@ -26,6 +27,7 @@ export function PriceChart({
   title = 'Agile Prices',
   height = 400,
   showConsumption = true,
+  showRunningTotal = false,
 }: PriceChartProps) {
   // Prepare price data
   const priceData = useMemo(() => {
@@ -42,6 +44,16 @@ export function PriceChart({
       x: parseDate(c.interval_start),
       y: c.consumption,
     }));
+  }, [consumption]);
+
+  // Prepare running total data
+  const runningTotalData = useMemo(() => {
+    return consumption
+      .filter((c) => c.running_total !== undefined)
+      .map((c) => ({
+        x: parseDate(c.interval_start),
+        y: c.running_total!,
+      }));
   }, [consumption]);
 
   // Get colors array for bar chart
@@ -87,6 +99,24 @@ export function PriceChart({
     });
   }
 
+  // Add running total trace if available and enabled
+  if (showRunningTotal && runningTotalData.length > 0) {
+    traces.push({
+      name: 'Running Total (kWh)',
+      x: runningTotalData.map((d) => d.x),
+      y: runningTotalData.map((d) => d.y),
+      type: 'scatter',
+      mode: 'lines',
+      yaxis: 'y3',
+      line: {
+        color: '#10b981',
+        width: 2,
+        dash: 'dot',
+      },
+      hovertemplate: 'Total: %{y:.3f} kWh<br>%{x}<extra></extra>',
+    });
+  }
+
   // Layout configuration
   const layout: Partial<Plotly.Layout> = {
     title: {
@@ -101,7 +131,7 @@ export function PriceChart({
     height,
     margin: {
       l: 60,
-      r: showConsumption && consumptionData.length > 0 ? 60 : 20,
+      r: showRunningTotal && runningTotalData.length > 0 ? 120 : (showConsumption && consumptionData.length > 0 ? 60 : 20),
       t: 50,
       b: 60,
     },
@@ -138,6 +168,22 @@ export function PriceChart({
             overlaying: 'y',
             side: 'right',
             showgrid: false,
+            position: showRunningTotal && runningTotalData.length > 0 ? 0.9 : 1,
+          }
+        : undefined,
+    yaxis3:
+      showRunningTotal && runningTotalData.length > 0
+        ? {
+            title: {
+              text: 'Running Total (kWh)',
+              font: { color: '#10b981' },
+            },
+            tickfont: { color: '#10b981' },
+            overlaying: 'y',
+            side: 'right',
+            showgrid: false,
+            anchor: 'free',
+            position: 1,
           }
         : undefined,
     legend: {

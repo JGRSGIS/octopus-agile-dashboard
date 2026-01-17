@@ -65,6 +65,7 @@ export function DataTable({ data, type, height = 400 }: DataTableProps) {
           time: formatTime(parseDate(item.interval_start)),
           intervalStart: item.interval_start,
           consumption: item.consumption,
+          runningTotal: 'running_total' in item ? item.running_total : undefined,
         };
       } else {
         // PricePeriod
@@ -120,9 +121,17 @@ export function DataTable({ data, type, height = 400 }: DataTableProps) {
         {
           field: 'consumption',
           headerName: 'Usage (kWh)',
-          flex: 1,
+          width: 120,
           valueFormatter: (params: ValueFormatterParams) =>
             params.value ? formatKwh(params.value) : '',
+        },
+        {
+          field: 'runningTotal',
+          headerName: 'Running Total (kWh)',
+          flex: 1,
+          valueFormatter: (params: ValueFormatterParams) =>
+            params.value !== undefined ? formatKwh(params.value) : '',
+          cellStyle: { color: '#a78bfa' },
         },
       ];
     } else {

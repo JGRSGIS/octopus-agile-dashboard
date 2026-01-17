@@ -3,7 +3,7 @@
  */
 
 import { useState } from 'react';
-import { RefreshCw, AlertCircle, Zap, Clock } from 'lucide-react';
+import { RefreshCw, AlertCircle, Zap, Clock, Calendar } from 'lucide-react';
 
 import { useDashboard, useHealth } from '../hooks';
 import CurrentPrice from '../components/CurrentPrice';
@@ -16,11 +16,21 @@ import { formatRelativeTime } from '../utils/formatters';
 
 type TabType = 'overview' | 'prices' | 'consumption' | 'analysis' | 'comparison' | 'live';
 
+// Consumption period options
+const PERIOD_OPTIONS = [
+  { value: 7, label: '7 days' },
+  { value: 14, label: '14 days' },
+  { value: 30, label: '30 days' },
+  { value: 60, label: '60 days' },
+  { value: 90, label: '90 days' },
+];
+
 export function Dashboard() {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
+  const [consumptionDays, setConsumptionDays] = useState<number>(7);
 
-  // Fetch dashboard data
-  const { data: dashboardData, isLoading, error, refetch, dataUpdatedAt } = useDashboard();
+  // Fetch dashboard data with configurable consumption period
+  const { data: dashboardData, isLoading, error, refetch, dataUpdatedAt } = useDashboard(consumptionDays);
 
   // Health check
   const { data: health, isLoading: healthLoading } = useHealth();
@@ -95,6 +105,23 @@ export function Dashboard() {
             </div>
 
             <div className="flex items-center gap-4">
+              {/* Consumption period selector */}
+              <div className="flex items-center gap-2">
+                <Calendar className="w-4 h-4 text-gray-400" />
+                <select
+                  value={consumptionDays}
+                  onChange={(e) => setConsumptionDays(Number(e.target.value))}
+                  className="bg-gray-700 text-gray-200 text-sm rounded-lg px-2 py-1 border border-gray-600 focus:border-blue-500 focus:outline-none"
+                  title="Consumption period"
+                >
+                  {PERIOD_OPTIONS.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
               {/* Last updated */}
               <div className="text-sm text-gray-400 flex items-center gap-1">
                 <Clock className="w-4 h-4" />
@@ -187,7 +214,7 @@ export function Dashboard() {
               {/* Price chart */}
               <PriceChart
                 prices={dashboardData.prices_48h}
-                consumption={dashboardData.consumption_7d}
+                consumption={dashboardData.consumption}
                 title="48-Hour Price View"
                 height={350}
               />
@@ -221,15 +248,16 @@ export function Dashboard() {
           <div className="space-y-6">
             <PriceChart
               prices={[]}
-              consumption={dashboardData.consumption_7d}
-              title="Consumption - Last 7 Days"
+              consumption={dashboardData.consumption}
+              title={`Consumption - Last ${dashboardData.consumption_days} Days`}
               height={450}
               showConsumption={true}
+              showRunningTotal={true}
             />
 
             <StatsCards consumptionStats={dashboardData.today.consumption} />
 
-            <DataTable data={dashboardData.consumption_7d} type="consumption" height={500} />
+            <DataTable data={dashboardData.consumption} type="consumption" height={500} />
           </div>
         )}
 
@@ -237,7 +265,7 @@ export function Dashboard() {
           <div className="space-y-6">
             <PriceChart
               prices={dashboardData.prices_48h}
-              consumption={dashboardData.consumption_7d}
+              consumption={dashboardData.consumption}
               title="Price vs Consumption Analysis"
               height={450}
               showConsumption={true}

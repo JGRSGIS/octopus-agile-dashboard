@@ -16,6 +16,7 @@ export interface ConsumptionPeriod {
   interval_start: string;
   interval_end: string;
   consumption: number;
+  running_total?: number;
 }
 
 // Price statistics
@@ -119,7 +120,9 @@ export interface DashboardResponse {
   best_upcoming: PricePeriod[];
   has_negative_upcoming: boolean;
   prices_48h: PricePeriod[];
-  consumption_7d: ConsumptionPeriod[];
+  consumption: ConsumptionPeriod[];
+  consumption_days: number;
+  consumption_period_start: string;
   today: {
     prices: PriceStats;
     consumption: ConsumptionStats;

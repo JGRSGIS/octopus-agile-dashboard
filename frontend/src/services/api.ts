@@ -185,10 +185,13 @@ export const consumptionApi = {
 export const analysisApi = {
   /**
    * Get full dashboard data in one request
+   * @param consumptionDays Number of days of consumption data to fetch (1-90, default 7)
    */
-  async getDashboard(): Promise<DashboardResponse> {
+  async getDashboard(consumptionDays: number = 7): Promise<DashboardResponse> {
     try {
-      const response = await apiClient.get<DashboardResponse>('/analysis/dashboard');
+      const response = await apiClient.get<DashboardResponse>('/analysis/dashboard', {
+        params: { consumption_days: consumptionDays },
+      });
       return response.data;
     } catch (error) {
       throw handleApiError(error as AxiosError<ApiError>);

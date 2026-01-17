@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query
 
 from app.core.config import settings
 from app.services.calculations import (
+    add_running_totals,
     calculate_consumption_statistics,
     calculate_cost_analysis,
     calculate_price_statistics,
@@ -167,12 +168,17 @@ async def get_period_summary(
 
 @router.get("/dashboard")
 async def get_dashboard_data(
+    consumption_days: int = Query(
+        7, ge=1, le=90, description="Number of days of consumption data to fetch (1-90)"
+    ),
     _: None = Depends(check_full_config),
 ) -> dict[str, Any]:
     """
     Get all data needed for the main dashboard in a single request.
 
     Optimized for frontend to minimize API calls.
+    Supports configurable consumption period (default 7 days).
+    Includes running totals for consumption data.
     """
     try:
         now = datetime.now(UTC)
@@ -184,14 +190,17 @@ async def get_dashboard_data(
             period_from=prices_from, period_to=prices_to
         )
 
-        # Fetch recent consumption (7 days)
-        consumption_from = now - timedelta(days=7)
+        # Fetch recent consumption (configurable period)
+        consumption_from = now - timedelta(days=consumption_days)
         consumption = await octopus_client.fetch_consumption(
             period_from=consumption_from, period_to=now
         )
 
-        # Fetch 7-day price history to match consumption period for cost analysis
-        prices_7d = await octopus_client.fetch_prices(
+        # Add running totals to consumption data
+        consumption_with_totals = add_running_totals(consumption)
+
+        # Fetch price history to match consumption period for cost analysis
+        prices_for_consumption = await octopus_client.fetch_prices(
             period_from=consumption_from, period_to=now
         )
 
@@ -216,8 +225,8 @@ async def get_dashboard_data(
         price_stats = calculate_price_statistics(today_prices)
         consumption_stats = calculate_consumption_statistics(today_consumption)
 
-        # Cost for matched periods (using 7-day prices to match 7-day consumption)
-        cost_analysis = calculate_cost_analysis(prices_7d, consumption)
+        # Cost for matched periods
+        cost_analysis = calculate_cost_analysis(prices_for_consumption, consumption)
 
         return {
             "timestamp": now.isoformat(),
@@ -227,7 +236,9 @@ async def get_dashboard_data(
             "best_upcoming": current_prices["best_upcoming"],
             "has_negative_upcoming": current_prices["has_negative_upcoming"],
             "prices_48h": prices,
-            "consumption_7d": consumption,
+            "consumption": consumption_with_totals,
+            "consumption_days": consumption_days,
+            "consumption_period_start": consumption_from.isoformat(),
             "today": {
                 "prices": price_stats.to_dict(),
                 "consumption": consumption_stats.to_dict(),
