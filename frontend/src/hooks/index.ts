@@ -37,7 +37,7 @@ export const queryKeys = {
   },
   analysis: {
     all: ['analysis'] as const,
-    dashboard: () => [...queryKeys.analysis.all, 'dashboard'] as const,
+    dashboard: (consumptionDays: number) => [...queryKeys.analysis.all, 'dashboard', consumptionDays] as const,
     summary: (period: string) => [...queryKeys.analysis.all, 'summary', period] as const,
     recommendations: (hours: number) =>
       [...queryKeys.analysis.all, 'recommendations', hours] as const,
@@ -147,11 +147,12 @@ export function useDailyConsumption(days: number = 30) {
 
 /**
  * Fetch full dashboard data
+ * @param consumptionDays Number of days of consumption data to fetch (1-90, default 7)
  */
-export function useDashboard(): UseQueryResult<DashboardResponse, Error> {
+export function useDashboard(consumptionDays: number = 7): UseQueryResult<DashboardResponse, Error> {
   return useQuery({
-    queryKey: queryKeys.analysis.dashboard(),
-    queryFn: () => analysisApi.getDashboard(),
+    queryKey: queryKeys.analysis.dashboard(consumptionDays),
+    queryFn: () => analysisApi.getDashboard(consumptionDays),
     refetchInterval: 5 * 60 * 1000, // Refetch every 5 minutes
     staleTime: 60 * 1000, // Consider stale after 1 minute
   });

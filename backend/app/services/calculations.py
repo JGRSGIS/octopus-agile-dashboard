@@ -401,6 +401,41 @@ def get_current_and_upcoming_prices(
     }
 
 
+def add_running_totals(
+    consumption: list[dict[str, Any]],
+) -> list[dict[str, Any]]:
+    """
+    Add running total to consumption data.
+
+    Args:
+        consumption: List of consumption periods from the Octopus API
+
+    Returns:
+        List of consumption periods with running_total field added
+    """
+    if not consumption:
+        return []
+
+    # Sort by interval_start to ensure chronological order
+    sorted_consumption = sorted(
+        consumption,
+        key=lambda x: x["interval_start"] if isinstance(x["interval_start"], str)
+        else x["interval_start"].isoformat(),
+    )
+
+    running_total = 0.0
+    result = []
+
+    for c in sorted_consumption:
+        running_total += c["consumption"]
+        result.append({
+            **c,
+            "running_total": round(running_total, 3),
+        })
+
+    return result
+
+
 def aggregate_by_hour(
     data: list[dict[str, Any]],
     value_key: str = "value_inc_vat",
